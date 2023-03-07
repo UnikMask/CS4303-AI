@@ -17,6 +17,9 @@ public class Runner extends PApplet {
 		frameRate(60);
 		mainGraphicsCtx = createGraphics((int) ((float) width * MAIN_CTX_PERCENT.x),
 				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P2D);
+		Level lvl = Level.generate(new PVector(50, 50), 69);
+		System.out.println(lvl);
+
 	}
 
 	public void settings() {
