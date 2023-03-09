@@ -1,6 +1,7 @@
 package wolfdungeon3d;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -16,11 +17,37 @@ public class Level {
 	private PVector size;
 	private int[][] grid;
 
+	/////////////////////////
+	// Getters and Setters //
+	/////////////////////////
+
+	public PVector getSize() {
+		return size;
+	}
+
+	public Tile getTile(int x, int y) {
+		if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
+			return Tile.getTile(grid[y][x]);
+		}
+		return Tile.WALL;
+	}
+
 	// Enum for tiles - maps tile to number.
 	enum Tile {
 		WALL(0), ROOM(1), CENTER(2);
 
 		int num;
+
+		static Tile getTile(int n) {
+			if (n == 0) {
+				return WALL;
+			} else if (n == 1) {
+				return ROOM;
+			} else if (n == 2) {
+				return CENTER;
+			}
+			return WALL;
+		}
 
 		Tile(int num) {
 			this.num = num;
@@ -131,6 +158,7 @@ public class Level {
 
 		// 2. Create rooms for each leaf nodes
 		ArrayDeque<BinaryNode> roomStack = new ArrayDeque<>(Arrays.asList(root));
+		ArrayList<Room> rooms = new ArrayList<>();
 		while (!roomStack.isEmpty()) {
 			BinaryNode next = roomStack.pollFirst();
 			if (!next.isLeaf()) {
@@ -152,6 +180,7 @@ public class Level {
 				}
 				PVector newBoundMin = new PVector(offsetX + 1, offsetY + 1);
 				next.setRoomBounds(newBoundMin, PVector.add(newBoundMin, new PVector(roomSizeX, roomSizeY)));
+				rooms.add(new Room(newBoundMin, new PVector(roomSizeX, roomSizeY), ret));
 			}
 		}
 
@@ -170,19 +199,19 @@ public class Level {
 
 			PVector ptL, ptR;
 			BinaryNode connect = next.l;
-			while (!connect.isLeaf() && next.vSplit == connect.vSplit) {
-				connect = connect.l;
+			while (!connect.isLeaf()) {
+				connect = connect.r;
 			}
 			ptL = connect.getRoomMiddle();
 
 			connect = next.r;
-			while (!connect.isLeaf() && next.vSplit == connect.vSplit) {
-				connect = connect.r;
+			while (!connect.isLeaf()) {
+				connect = next.vSplit == connect.vSplit ? connect.l : connect.r;
 			}
 			ptR = connect.getRoomMiddle();
 
 			// Draw corridor
-			PVector midPoint = drawCorridor(ret.grid, ptL, ptR, next.vSplit);
+			PVector midPoint = drawCorridor(ret.grid, ptL, ptR, connect.vSplit);
 
 			// Set current node as corridored
 			PVector corridorCenter = next.vSplit ? new PVector(next.getNodeMiddle().x, midPoint.y)
@@ -191,6 +220,15 @@ public class Level {
 			next.roomBoundMin = corridorCenter;
 			next.corridored = true;
 		}
+
+		PVector firstRoomPos = PVector.add(rooms.get(0).pos, new PVector(1, 1));
+		PVector lastRoomPos = PVector.add(rooms.get(rooms.size() - 1).pos, new PVector(1, 1));
+		ComputerController cc = new ComputerController(new Entity(firstRoomPos, null), ret);
+		ArrayList<IntTuple> path = cc.getPath(lastRoomPos);
+		for (IntTuple cell : path) {
+			ret.grid[cell.b][cell.a] = Tile.CENTER.num;
+		}
+		ret.grid[Math.round(lastRoomPos.x)][Math.round(lastRoomPos.y)] = Tile.CENTER.num;
 
 		return ret;
 	}
