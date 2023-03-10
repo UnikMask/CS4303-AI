@@ -71,13 +71,16 @@ public class ComputerController implements EntityController {
 
 	}
 
+	public void getCombatTurn(Combat combat) {
+	}
+
 	////////////////////
 	// Public Methods //
 	////////////////////
 
-	private int getG(IntTuple o1, HashMap<IntTuple, Integer> g) {
-		return g.containsKey(o1) ? g.get(o1) : Integer.MAX_VALUE;
-	}
+	/////////////////////
+	// Private Methods //
+	/////////////////////
 
 	private ArrayList<IntTuple> getPath(IntTuple target, IntTuple start, HashMap<IntTuple, IntTuple> pathMap) {
 		ArrayDeque<IntTuple> path = new ArrayDeque<>(Arrays.asList(target));
@@ -121,7 +124,11 @@ public class ComputerController implements EntityController {
 		return getPath(q.peek(), start, lastNode);
 	}
 
-	public int getManhattanDist(IntTuple start, IntTuple end) {
+	private int getG(IntTuple o1, HashMap<IntTuple, Integer> g) {
+		return g.containsKey(o1) ? g.get(o1) : Integer.MAX_VALUE;
+	}
+
+	private int getManhattanDist(IntTuple start, IntTuple end) {
 		return Math.abs(end.a - start.a) + Math.abs(end.b - start.b);
 	}
 

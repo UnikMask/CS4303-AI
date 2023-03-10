@@ -3,6 +3,7 @@ package wolfdungeon3d;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -115,15 +116,25 @@ public class Level {
 		Level ret = new Level(size);
 
 		Random rGenRandom = new Random(seed);
-		BinaryNode root = new BinaryNode(null, new PVector(0, 0), new PVector(size.x, size.y));
 
-		// 1. Split until all nodes are lower than max.
+		BinaryNode root = ret.generatePartitions(rGenRandom, size);
+		ret.generateRoomsFromPartition(root, rGenRandom);
+		ret.generateCorridors(root, rGenRandom);
+		return ret;
+	}
+
+	/////////////////////
+	// Private Methods //
+	/////////////////////
+
+	private BinaryNode generatePartitions(Random randomizer, PVector size) {
+		BinaryNode root = new BinaryNode(null, new PVector(0, 0), new PVector(size.x, size.y));
 		ArrayDeque<BinaryNode> q = new ArrayDeque<>(Arrays.asList(root));
 		while (!q.isEmpty()) {
 			BinaryNode next = q.pollFirst();
 			if (!(next.size.x > MIN_DIV_SIZE.x && next.size.y > MIN_DIV_SIZE.y)) {
 				continue;
-			} else if (!rGenRandom.nextBoolean()
+			} else if (!randomizer.nextBoolean()
 					&& (next.size.x <= MAX_ROOM_SIZE.x && next.size.y <= MAX_ROOM_SIZE.y)) {
 				continue;
 			}
@@ -134,10 +145,10 @@ public class Level {
 			} else if (next.size.y < MAX_ROOM_SIZE.y) {
 				vSplit = true;
 			} else {
-				vSplit = rGenRandom.nextBoolean();
+				vSplit = randomizer.nextBoolean();
 			}
 
-			float ratio = rGenRandom.nextFloat();
+			float ratio = randomizer.nextFloat();
 			if (vSplit) {
 				PVector splitSize = new PVector(Math.min(ratio * (next.size.x - MIN_ROOM_SIZE.x) + MIN_ROOM_SIZE.x,
 						next.size.x - MIN_ROOM_SIZE.x), 0);
@@ -155,9 +166,12 @@ public class Level {
 			q.addLast(next.l);
 			q.addLast(next.r);
 		}
+		return root;
+	}
 
+	private ArrayList<Room> generateRoomsFromPartition(BinaryNode rootNode, Random randomizer) {
 		// 2. Create rooms for each leaf nodes
-		ArrayDeque<BinaryNode> roomStack = new ArrayDeque<>(Arrays.asList(root));
+		ArrayDeque<BinaryNode> roomStack = new ArrayDeque<>(Arrays.asList(rootNode));
 		ArrayList<Room> rooms = new ArrayList<>();
 		while (!roomStack.isEmpty()) {
 			BinaryNode next = roomStack.pollFirst();
@@ -167,25 +181,27 @@ public class Level {
 			} else {
 				// Create a room and reduce leaf size and bounds to room
 				int roomSizeX = Math.round(
-						MIN_ROOM_SIZE.x + (0.5f + rGenRandom.nextFloat() / 2f) * (next.size.x - MIN_ROOM_SIZE.x));
+						MIN_ROOM_SIZE.x + (0.5f + randomizer.nextFloat() / 2f) * (next.size.x - MIN_ROOM_SIZE.x));
 				int roomSizeY = Math.round(
-						MIN_ROOM_SIZE.y + (0.5f + rGenRandom.nextFloat() / 2f) * (next.size.y - MIN_ROOM_SIZE.y));
+						MIN_ROOM_SIZE.y + (0.5f + randomizer.nextFloat() / 2f) * (next.size.y - MIN_ROOM_SIZE.y));
 
-				int offsetX = Math.round(next.boundMin.x + rGenRandom.nextFloat() * ((float) next.size.x - roomSizeX));
-				int offsetY = Math.round(next.boundMin.y + rGenRandom.nextFloat() * ((float) next.size.y - roomSizeY));
+				int offsetX = Math.round(next.boundMin.x + randomizer.nextFloat() * ((float) next.size.x - roomSizeX));
+				int offsetY = Math.round(next.boundMin.y + randomizer.nextFloat() * ((float) next.size.y - roomSizeY));
 				for (int i = 1; i < roomSizeY - 1; i++) {
 					for (int j = 1; j < roomSizeX - 1; j++) {
-						ret.grid[i + offsetY][j + offsetX] = Tile.ROOM.num;
+						grid[i + offsetY][j + offsetX] = Tile.ROOM.num;
 					}
 				}
 				PVector newBoundMin = new PVector(offsetX + 1, offsetY + 1);
 				next.setRoomBounds(newBoundMin, PVector.add(newBoundMin, new PVector(roomSizeX, roomSizeY)));
-				rooms.add(new Room(newBoundMin, new PVector(roomSizeX, roomSizeY), ret));
+				rooms.add(new Room(newBoundMin, new PVector(roomSizeX, roomSizeY), this));
 			}
 		}
+		return rooms;
+	}
 
-		// 3. Link rooms
-		ArrayDeque<BinaryNode> corridorStack = new ArrayDeque<>(Arrays.asList(root));
+	private void generateCorridors(BinaryNode rootNode, Random randomizer) {
+		ArrayDeque<BinaryNode> corridorStack = new ArrayDeque<>(Arrays.asList(rootNode));
 		while (!corridorStack.isEmpty()) {
 			BinaryNode next = corridorStack.pollFirst();
 			if (next.isLeaf()) {
@@ -211,7 +227,7 @@ public class Level {
 			ptR = connect.getRoomMiddle();
 
 			// Draw corridor
-			PVector midPoint = drawCorridor(ret.grid, ptL, ptR, connect.vSplit);
+			PVector midPoint = this.drawCorridor(ptL, ptR, connect.vSplit);
 
 			// Set current node as corridored
 			PVector corridorCenter = next.vSplit ? new PVector(next.getNodeMiddle().x, midPoint.y)
@@ -221,19 +237,9 @@ public class Level {
 			next.corridored = true;
 		}
 
-		PVector firstRoomPos = PVector.add(rooms.get(0).pos, new PVector(1, 1));
-		IntTuple lastRoomPos = new IntTuple(PVector.add(rooms.get(rooms.size() - 1).pos, new PVector(1, 1)));
-		ComputerController cc = new ComputerController(new Entity(firstRoomPos, null), ret);
-		ArrayList<IntTuple> path = cc.getPath(lastRoomPos);
-		for (IntTuple cell : path) {
-			ret.grid[cell.b][cell.a] = Tile.CENTER.num;
-		}
-		ret.grid[lastRoomPos.b][lastRoomPos.a] = Tile.CENTER.num;
-
-		return ret;
 	}
 
-	static PVector drawCorridor(int[][] grid, PVector ptA, PVector ptB, boolean xFirst) {
+	private PVector drawCorridor(PVector ptA, PVector ptB, boolean xFirst) {
 		Function<PVector, Consumer<PVector>> xLoop = (start) -> (end) -> {
 			int dist = (int) (end.x - start.x);
 			if (dist != 0) {
