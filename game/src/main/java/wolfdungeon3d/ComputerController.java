@@ -1,10 +1,12 @@
 package wolfdungeon3d;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.PriorityQueue;
 
 import processing.core.PVector;
@@ -13,6 +15,8 @@ import wolfdungeon3d.Level.Tile;
 public class ComputerController implements EntityController {
 	private Entity e;
 	private Level level;
+	private static final List<IntTuple> neighbours = Arrays.asList(new IntTuple(0, 1), new IntTuple(1, 0),
+			new IntTuple(0, -1), new IntTuple(-1, 0));
 
 	/////////////////////////
 	// Getters and Setters //
@@ -71,60 +75,54 @@ public class ComputerController implements EntityController {
 	// Public Methods //
 	////////////////////
 
-	public ArrayList<IntTuple> getPath(PVector target) {
-		IntTuple startT = new IntTuple(Math.round(e.getPosition().x), Math.round(e.getPosition().y));
-		ArrayList<IntTuple> path = new ArrayList<>(Arrays.asList(startT));
-		IntTuple targetT = new IntTuple(Math.round(target.x), Math.round(target.y));
-
-		PriorityQueue<ArrayList<IntTuple>> q = new PriorityQueue<>(new Comparator<ArrayList<IntTuple>>() {
-			public int compare(ArrayList<IntTuple> o1, ArrayList<IntTuple> o2) {
-				return getAScore(o1, targetT) - getAScore(o2, targetT);
-			}
-		});
-
-		q.add(path);
-
-		int step = 0;
-		HashSet<ArrayList<IntTuple>> prevPaths = new HashSet<>();
-		while (!q.peek().get(q.peek().size() - 1).equals(targetT) && step < 50000) {
-			path = q.poll();
-			System.out.println("Path: " + path);
-			System.out.println("Current path score: " + getAScore(path, targetT) + ", list size: " + q.size());
-			IntTuple currPos = path.get(path.size() - 1);
-			HashSet<IntTuple> prevPositions = new HashSet<>(path);
-			for (int i = -1; i <= 1; i++) {
-				for (int j = -1; j <= 1; j++) {
-					IntTuple newPos = new IntTuple(currPos.b + i, currPos.a + j);
-					if ((Math.abs(i) > 0 && Math.abs(j) > 0) || prevPositions.contains(newPos)) {
-						continue;
-					}
-					if (level.getTile(newPos.b, newPos.a) == Tile.ROOM) {
-						ArrayList<IntTuple> nPath = new ArrayList<>(path);
-						nPath.add(newPos);
-						if (!prevPaths.contains(nPath)) {
-							q.add(nPath);
-							prevPaths.add(nPath);
-						}
-					}
-				}
-			}
-			step += 1;
-		}
-
-		return path;
+	private int getG(IntTuple o1, HashMap<IntTuple, Integer> g) {
+		return g.containsKey(o1) ? g.get(o1) : Integer.MAX_VALUE;
 	}
 
-	public int getAScore(ArrayList<IntTuple> path, IntTuple target) {
-		return getManhattanDist(new IntTuple(Math.round(e.getPosition().x), Math.round(e.getPosition().y)), target)
-				+ getPathCost(path);
+	private ArrayList<IntTuple> getPath(IntTuple target, IntTuple start, HashMap<IntTuple, IntTuple> pathMap) {
+		ArrayDeque<IntTuple> path = new ArrayDeque<>(Arrays.asList(target));
+		IntTuple current = target;
+		while (current != start) {
+			current = pathMap.get(current);
+			path.push(current);
+		}
+		return new ArrayList<>(path);
+	}
+
+	public ArrayList<IntTuple> getPath(IntTuple target) {
+		IntTuple start = new IntTuple(e.getPosition());
+		HashMap<IntTuple, Integer> g = new HashMap<>();
+		HashMap<IntTuple, IntTuple> lastNode = new HashMap<>();
+		g.put(start, 0);
+
+		PriorityQueue<IntTuple> q = new PriorityQueue<>(new Comparator<IntTuple>() {
+			public int compare(IntTuple o1, IntTuple o2) {
+				return (getG(o1, g) + getManhattanDist(o1, target) - getG(o2, g) - getManhattanDist(o2, target));
+			}
+		});
+		q.add(start);
+
+		for (int step = 0; !q.isEmpty() && step < 10000; step++) {
+			IntTuple next = q.poll();
+			if (next.equals(target)) {
+				System.out.println("Number of steps: " + step);
+				return getPath(target, start, lastNode);
+			}
+			for (IntTuple neighbour : neighbours) {
+				IntTuple newNode = IntTuple.add(neighbour, next);
+				if (level.getTile(newNode.a, newNode.b) == Tile.ROOM && getG(next, g) + 1 < getG(newNode, g)) {
+					lastNode.put(newNode, next);
+					g.put(newNode, getG(next, g) + 1);
+					q.add(newNode);
+				}
+			}
+		}
+
+		return getPath(q.peek(), start, lastNode);
 	}
 
 	public int getManhattanDist(IntTuple start, IntTuple end) {
-		return end.a - start.a + end.b - start.b;
-	}
-
-	public int getPathCost(ArrayList<IntTuple> path) {
-		return path.stream().mapToInt((p) -> 1).sum();
+		return Math.abs(end.a - start.a) + Math.abs(end.b - start.b);
 	}
 
 	/////////////////

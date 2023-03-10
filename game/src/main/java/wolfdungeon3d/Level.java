@@ -222,13 +222,13 @@ public class Level {
 		}
 
 		PVector firstRoomPos = PVector.add(rooms.get(0).pos, new PVector(1, 1));
-		PVector lastRoomPos = PVector.add(rooms.get(rooms.size() - 1).pos, new PVector(1, 1));
+		IntTuple lastRoomPos = new IntTuple(PVector.add(rooms.get(rooms.size() - 1).pos, new PVector(1, 1)));
 		ComputerController cc = new ComputerController(new Entity(firstRoomPos, null), ret);
 		ArrayList<IntTuple> path = cc.getPath(lastRoomPos);
 		for (IntTuple cell : path) {
 			ret.grid[cell.b][cell.a] = Tile.CENTER.num;
 		}
-		ret.grid[Math.round(lastRoomPos.x)][Math.round(lastRoomPos.y)] = Tile.CENTER.num;
+		ret.grid[lastRoomPos.b][lastRoomPos.a] = Tile.CENTER.num;
 
 		return ret;
 	}
