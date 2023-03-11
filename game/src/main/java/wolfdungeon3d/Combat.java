@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
@@ -75,7 +74,6 @@ public class Combat {
 		case FLEE:
 			break;
 		case CAST:
-			CastCommand cc = (CastCommand) command;
 		}
 		endRound(currentEntity);
 		do {

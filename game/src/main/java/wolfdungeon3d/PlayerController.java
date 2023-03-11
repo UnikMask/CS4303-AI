@@ -45,6 +45,14 @@ public class PlayerController implements EntityController {
 		e.move(dir);
 	}
 
+	public void getCombatTurn(Combat combat) {
+
+	}
+
+	/////////////////
+	// Constructor //
+	/////////////////
+
 	public PlayerController(Entity e, InputSettings inputs) {
 		this.inputs = inputs;
 		this.e = e;
