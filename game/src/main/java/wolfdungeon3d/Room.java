@@ -7,7 +7,6 @@ import processing.core.PVector;
 public class Room {
 	PVector pos, size;
 	private boolean isFilled;
-	private Level level;
 
 	/////////////////////////
 	// Getters And Setters //

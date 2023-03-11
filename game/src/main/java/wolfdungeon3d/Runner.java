@@ -12,23 +12,26 @@ public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_POS = new PVector();
 
 	PGraphics mainGraphicsCtx;
+	RaycastingRenderer renderer;
+	Level lvl;
 
 	public void setup() {
 		frameRate(60);
 		mainGraphicsCtx = createGraphics((int) ((float) width * MAIN_CTX_PERCENT.x),
 				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P2D);
-		Level lvl = Level.generate(new PVector(100, 100), 163292389);
+		lvl = Level.generate(new PVector(35, 35), 163292389);
 		System.out.println(lvl);
+		renderer = new RaycastingRenderer(this, lvl);
 
 	}
 
 	public void settings() {
-		size(1920, 1080, PApplet.P2D);
+		size(1920, 1080, PApplet.P3D);
 	}
 
 	public void draw() {
 		mainGraphicsCtx.beginDraw();
-		mainGraphicsCtx.background(0);
+		renderer.draw(mainGraphicsCtx, lvl.getStartPosition(), new PVector(0, 0.2f, 0), new PVector(-0.2f, 0, 0.15f));
 		mainGraphicsCtx.endDraw();
 		image(mainGraphicsCtx, MAIN_CTX_POS.x, MAIN_CTX_POS.y);
 	}

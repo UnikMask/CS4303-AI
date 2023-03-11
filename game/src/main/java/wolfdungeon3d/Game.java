@@ -3,13 +3,11 @@ package wolfdungeon3d;
 import java.util.Date;
 import java.util.Random;
 
-import processing.core.PGraphics;
 import processing.core.PVector;
 
 public class Game {
 	private static final PVector BASE_FLOOR_SIZE = new PVector(25, 25);
 	private static final PVector FLOOR_SIZE_INCREMENT = new PVector(2, 2);
-	private PGraphics screen;
 	private GameState state;
 	private Level lvl;
 	private int floor = 0;

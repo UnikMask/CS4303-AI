@@ -3,12 +3,13 @@ package wolfdungeon3d;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
 import com.google.common.base.Function;
 
+import processing.core.PApplet;
+import processing.core.PImage;
 import processing.core.PVector;
 
 public class Level {
@@ -17,21 +18,7 @@ public class Level {
 	private static final PVector MIN_DIV_SIZE = new PVector(10, 10);
 	private PVector size;
 	private int[][] grid;
-
-	/////////////////////////
-	// Getters and Setters //
-	/////////////////////////
-
-	public PVector getSize() {
-		return size;
-	}
-
-	public Tile getTile(int x, int y) {
-		if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
-			return Tile.getTile(grid[y][x]);
-		}
-		return Tile.WALL;
-	}
+	private PVector startPosition;
 
 	// Enum for tiles - maps tile to number.
 	enum Tile {
@@ -55,16 +42,23 @@ public class Level {
 		}
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (int[] row : grid) {
-			for (int cell : row) {
-				sb.append(cell == 1 ? "  " : cell == 2 ? "CC" : "██");
-			}
-			sb.append('\n');
+	/////////////////////////
+	// Getters and Setters //
+	/////////////////////////
+
+	public PVector getSize() {
+		return size;
+	}
+
+	public Tile getTile(int x, int y) {
+		if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
+			return Tile.getTile(grid[y][x]);
 		}
-		return sb.toString();
+		return Tile.WALL;
+	}
+
+	public PVector getStartPosition() {
+		return startPosition;
 	}
 
 	//////////////////////
@@ -118,9 +112,37 @@ public class Level {
 		Random rGenRandom = new Random(seed);
 
 		BinaryNode root = ret.generatePartitions(rGenRandom, size);
-		ret.generateRoomsFromPartition(root, rGenRandom);
+		ArrayList<Room> rooms = ret.generateRoomsFromPartition(root, rGenRandom);
 		ret.generateCorridors(root, rGenRandom);
+		ret.startPosition = PVector.add(rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size()).pos,
+				new PVector(2, 2));
+		ret.grid[(int) ret.startPosition.y][(int) ret.startPosition.x] = Tile.CENTER.num;
 		return ret;
+	}
+
+	////////////////////
+	// Public Methods //
+	////////////////////
+
+	public PImage getGridImage(PApplet applet) {
+		IntTuple size = new IntTuple(grid[0].length, grid.length);
+		PImage image = applet.createImage(size.a, size.b, PApplet.RGB);
+		image.loadPixels();
+		for (int i = 0; i < image.pixels.length; i++) {
+			Tile tile = getTile(i % size.a, size.b - i / size.a - 1);
+			switch (tile) {
+			case WALL:
+				image.pixels[i] = applet.color(0, 0, 0);
+				break;
+			case ROOM:
+				image.pixels[i] = applet.color(255, 255, 255, 0);
+				break;
+			default:
+				image.pixels[i] = applet.color(0, 255, 0);
+			}
+		}
+		image.updatePixels();
+		return image;
 	}
 
 	/////////////////////
@@ -267,6 +289,22 @@ public class Level {
 			xLoop.apply(midPoint).accept(ptB);
 			return midPoint;
 		}
+	}
+
+	//////////////////////
+	// Object Overrides //
+	//////////////////////
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (int[] row : grid) {
+			for (int cell : row) {
+				sb.append(cell == 1 ? "  " : cell == 2 ? "CC" : "██");
+			}
+			sb.append('\n');
+		}
+		return sb.toString();
 	}
 
 	//////////////////
