@@ -12,7 +12,7 @@ import wolfdungeon3d.Game.GameState;
 
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
-	static private final PVector MAIN_CTX_POS = new PVector();
+	static private final PVector MAIN_CTX_POS = new PVector(0, 0);
 
 	PGraphics mainGraphicsCtx;
 	Game game;
@@ -48,7 +48,6 @@ public class Runner extends PApplet {
 		if (state == RunnerState.GAME && game == null) {
 			game = new Game(this);
 		} else if (state == RunnerState.GAME && game != null) {
-			System.out.println("Game should update!");
 			game.update();
 		}
 		if (state == RunnerState.GAME && game != null && game.getState() == GameState.EXPLORE) {

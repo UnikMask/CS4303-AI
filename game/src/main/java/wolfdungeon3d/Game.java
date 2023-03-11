@@ -11,8 +11,8 @@ public class Game {
 	private static final PVector BASE_FLOOR_SIZE = new PVector(25, 25);
 	private static final PVector FLOOR_SIZE_INCREMENT = new PVector(2, 2);
 	private static final float DIR_L = 0.2f;
-	private static final float PLANE_L = 0.4f;
-	private static final float PLANE_H = 0.125f;
+	private static final float PLANE_L = 0.15f;
+	private static final float PLANE_H = 0.1f;
 
 	private GameState state = GameState.LOADING;
 	private Entity player;
@@ -60,8 +60,6 @@ public class Game {
 			PVector plane = PVector.add(
 					PVector.mult(PVector.fromAngle((float) (Math.PI / 2.0f) + player.getRotation()), PLANE_L),
 					new PVector(0, 0, PLANE_H));
-			System.out.println("dir vector: " + dir);
-			System.out.println("plane vector: " + plane);
 			renderer.draw(graphics, player.getPosition(), dir, plane, player.getRotation());
 		}
 	}

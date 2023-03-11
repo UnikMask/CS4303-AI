@@ -29,7 +29,6 @@ public class RaycastingRenderer {
 			generateCanvas(graphics);
 		}
 		graphics.background(0);
-		System.out.println("Player position: " + pos);
 		shader.set("pos", pos.x, pos.y, 0.25f);
 		shader.set("dir", dir.x, dir.y, 0);
 		shader.set("plane", plane.x, plane.y, plane.z);
