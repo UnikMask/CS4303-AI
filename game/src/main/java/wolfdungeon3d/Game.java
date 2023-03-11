@@ -10,10 +10,11 @@ import processing.core.PVector;
 public class Game {
 	private static final PVector BASE_FLOOR_SIZE = new PVector(25, 25);
 	private static final PVector FLOOR_SIZE_INCREMENT = new PVector(2, 2);
-	private static final PVector BASE_DIR = new PVector(0.2f, 0, 0);
-	private static final PVector BASE_PLANE = new PVector(0, -0.2f, 0.125f);
+	private static final float DIR_L = 0.2f;
+	private static final float PLANE_L = 0.4f;
+	private static final float PLANE_H = 0.125f;
 
-	private GameState state;
+	private GameState state = GameState.LOADING;
 	private Entity player;
 	private PlayerController controller;
 	private RaycastingRenderer renderer;
@@ -33,7 +34,7 @@ public class Game {
 	}
 
 	public void setUp() {
-		lvl = Level.generate(getLevelSize(floor), new Date().getTime() + new Random(floor).nextInt());
+		lvl = Level.generate(getLevelSize(floor), 69 + new Random(floor).nextInt());
 		player = new Entity(lvl.getStartPosition(), new Entity.Attributes(1, 1, 1, 1, 1, 1));
 	}
 
@@ -44,13 +45,25 @@ public class Game {
 	public void update() {
 		if (state == GameState.LOADING && lvl == null) {
 			setUp();
+		} else if (state == GameState.LOADING && lvl != null) {
+			state = GameState.EXPLORE;
 		} else if (state == GameState.EXPLORE) {
-			player.setRotation(player.getRotation() + 0.1f);
+			player.setRotation(player.getRotation() + 0.01f);
+
 		}
 	}
 
 	public void draw(PGraphics graphics) {
-		renderer.draw(graphics, player.getPosition(), BASE_DIR, BASE_PLANE, player.getRotation());
+		if (state == GameState.EXPLORE) {
+			PVector dir = PVector.mult(PVector.fromAngle(player.getRotation()), DIR_L);
+
+			PVector plane = PVector.add(
+					PVector.mult(PVector.fromAngle((float) (Math.PI / 2.0f) + player.getRotation()), PLANE_L),
+					new PVector(0, 0, PLANE_H));
+			System.out.println("dir vector: " + dir);
+			System.out.println("plane vector: " + plane);
+			renderer.draw(graphics, player.getPosition(), dir, plane, player.getRotation());
+		}
 	}
 
 	public Game(PApplet applet) {

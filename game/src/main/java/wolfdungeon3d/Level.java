@@ -115,7 +115,7 @@ public class Level {
 		ArrayList<Room> rooms = ret.generateRoomsFromPartition(root, rGenRandom);
 		ret.generateCorridors(root, rGenRandom);
 		ret.startPosition = PVector.add(rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size()).pos,
-				new PVector(2, 2));
+				new PVector(1.5f, 1.5f));
 		ret.grid[(int) ret.startPosition.y][(int) ret.startPosition.x] = Tile.CENTER.num;
 		return ret;
 	}
@@ -129,7 +129,7 @@ public class Level {
 		PImage image = applet.createImage(size.a, size.b, PApplet.RGB);
 		image.loadPixels();
 		for (int i = 0; i < image.pixels.length; i++) {
-			Tile tile = getTile(i % size.a, size.b - i / size.a - 1);
+			Tile tile = getTile(i % size.a, i / size.a);
 			switch (tile) {
 			case WALL:
 				image.pixels[i] = applet.color(0, 0, 0);

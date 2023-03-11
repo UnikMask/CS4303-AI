@@ -31,6 +31,7 @@ public class Runner extends PApplet {
 
 	public void settings() {
 		size(1920, 1080, PApplet.P3D);
+		fullScreen();
 	}
 
 	public void draw() {
@@ -46,11 +47,12 @@ public class Runner extends PApplet {
 	public void update() {
 		if (state == RunnerState.GAME && game == null) {
 			game = new Game(this);
+		} else if (state == RunnerState.GAME && game != null) {
+			System.out.println("Game should update!");
+			game.update();
 		}
 		if (state == RunnerState.GAME && game != null && game.getState() == GameState.EXPLORE) {
-			game.update();
 			((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
-		} else {
 			((GLWindow) surface.getNative()).confinePointer(false);
 			((GLWindow) surface.getNative()).setPointerVisible(true);
 		}
