@@ -8,38 +8,39 @@ uniform vec3 dir;
 uniform vec3 plane;
 uniform sampler2D texture;
 
+
 varying vec3 fPosition;
 
 void main() {
+
+	vec3 ray = normalize(dir + (fPosition * plane));
 	// Get ray delta distances.
-	vec3 nray = normalize(dir + (fPosition * plane));
 	vec3 deltaDist = vec3(100, 100, 100);
-	if (nray.x != 0) {
-		deltaDist.x = abs(1.0 / nray.x);
+	if (ray.x != 0) {
+		deltaDist.x = abs(1.0 / ray.x);
 	}
-	if (nray.y != 0) {
-		deltaDist.y = abs(1.0 / nray.y);
+	if (ray.y != 0) {
+		deltaDist.y = abs(1.0 / ray.y);
 	}
-	if (nray.z != 0) {
-		deltaDist.z = abs(1.0 / nray.z);
+	if (ray.z != 0) {
+		deltaDist.z = abs(1.0 / ray.z);
 	}
 
 	ivec3 map = ivec3(int(pos.x), int(pos.y), 0);
 	ivec3 tstep = ivec3(1, 1, 1);
-
 	vec3 sideDist = (vec3(map) + vec3(1, 1, 1) - pos) * deltaDist;
 
 
 	// Inverse steps on negative directions
-	if (nray.x < 0) {
+	if (ray.x < 0) {
 		tstep.x = -1;
 		sideDist.x = (pos.x - map.x) * deltaDist.x;
 	}
-	if (nray.y < 0) {
+	if (ray.y < 0) {
 		tstep.y = -1;
 		sideDist.y = (pos.y - map.y) * deltaDist.y;
 	}
-	if (nray.z < 0) {
+	if (ray.z < 0) {
 		tstep.z = -1;
 		sideDist.z = (pos.z - map.z) * deltaDist.z;
 	}
@@ -81,12 +82,10 @@ void main() {
 		intensity = (12.0 - sideDist.z) / 12;
 	}
 
-	vec4 light = vec4(1, 0.5, 0.2, 1);
-	if (side == 0) {
-		gl_FragColor = vec4(0, 0, 1, 1) * intensity * light;
-	} else if (side == 1) {
-		gl_FragColor = vec4(0, 0, 0.8, 1) * intensity * light;
+	vec4 light = vec4(1, 0.5, 0, 1);
+	if (side == 0 || side == 2) {
+		gl_FragColor = vec4(0.5, 0.5, 0.5, 1) * intensity * light;
 	} else if (side == 2) {
-		gl_FragColor = vec4(0.3, 0.3, 0.3, 1) * intensity * light;
+		gl_FragColor = vec4(0.1, 0.1, 0.1, 1) *  intensity * light;
 	}
 }
