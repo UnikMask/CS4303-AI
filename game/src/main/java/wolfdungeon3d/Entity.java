@@ -46,11 +46,11 @@ public class Entity {
 	// Getters and Setters //
 	/////////////////////////
 
-	public float getDirection() {
+	public float getRotation() {
 		return direction;
 	}
 
-	public void setDirection(float direction) {
+	public void setRotation(float direction) {
 		this.direction = direction;
 	}
 

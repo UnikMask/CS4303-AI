@@ -3,25 +3,29 @@
  */
 package wolfdungeon3d;
 
+import com.jogamp.newt.opengl.GLWindow;
+
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
+import wolfdungeon3d.Game.GameState;
 
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
 	static private final PVector MAIN_CTX_POS = new PVector();
 
 	PGraphics mainGraphicsCtx;
-	RaycastingRenderer renderer;
-	Level lvl;
+	Game game;
+	RunnerState state = RunnerState.GAME;
+
+	static enum RunnerState {
+		MENU, GAME
+	}
 
 	public void setup() {
 		frameRate(60);
 		mainGraphicsCtx = createGraphics((int) ((float) width * MAIN_CTX_PERCENT.x),
 				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P2D);
-		lvl = Level.generate(new PVector(35, 35), 163292389);
-		System.out.println(lvl);
-		renderer = new RaycastingRenderer(this, lvl);
 
 	}
 
@@ -30,10 +34,26 @@ public class Runner extends PApplet {
 	}
 
 	public void draw() {
+		update();
 		mainGraphicsCtx.beginDraw();
-		renderer.draw(mainGraphicsCtx, lvl.getStartPosition(), new PVector(0, 0.2f, 0), new PVector(-0.2f, 0, 0.15f));
+		if (state == RunnerState.GAME && game != null) {
+			game.draw(mainGraphicsCtx);
+		}
 		mainGraphicsCtx.endDraw();
 		image(mainGraphicsCtx, MAIN_CTX_POS.x, MAIN_CTX_POS.y);
+	}
+
+	public void update() {
+		if (state == RunnerState.GAME && game == null) {
+			game = new Game(this);
+		}
+		if (state == RunnerState.GAME && game != null && game.getState() == GameState.EXPLORE) {
+			game.update();
+			((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
+		} else {
+			((GLWindow) surface.getNative()).confinePointer(false);
+			((GLWindow) surface.getNative()).setPointerVisible(true);
+		}
 	}
 
 	public static void main(String[] args) {

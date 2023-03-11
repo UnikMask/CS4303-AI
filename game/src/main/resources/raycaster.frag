@@ -5,7 +5,7 @@ precision mediump int
 
 
 uniform vec3 pos;
-uniform vec2 dir;
+uniform vec3 dir;
 uniform sampler2D texture;
 
 varying vec4 vertCoords;

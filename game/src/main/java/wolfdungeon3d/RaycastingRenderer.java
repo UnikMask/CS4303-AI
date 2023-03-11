@@ -21,9 +21,11 @@ public class RaycastingRenderer {
 
 	public void setLevelImage(PImage tex) {
 		this.levelTex = tex;
+		this.canvas = null;
+
 	}
 
-	public void draw(PGraphics graphics, PVector pos, PVector dir, PVector plane) {
+	public void draw(PGraphics graphics, PVector pos, PVector dir, PVector plane, float rotation) {
 		if (canvas == null) {
 			generateCanvas(graphics);
 		}
@@ -31,6 +33,7 @@ public class RaycastingRenderer {
 		shader.set("pos", pos.x, pos.y, 0.25f);
 		shader.set("dir", dir.x, dir.y);
 		shader.set("plane", plane.x, plane.y, plane.z);
+		shader.set("rotation", rotation);
 		graphics.shader(shader);
 		graphics.shape(canvas, 0, 0);
 	}

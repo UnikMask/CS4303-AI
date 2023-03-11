@@ -1,7 +1,8 @@
 
 uniform vec3 pos;
-uniform vec2 dir;
+uniform vec3 dir;
 uniform vec3 plane;
+uniform float rotation;
 uniform mat4 transform;
 
 attribute vec4 position;
@@ -16,5 +17,14 @@ void main() {
 
 	vertCoords = gl_Position;
 	vertColor = color;
-	ray =  vec3(dir, 0) + vec3(gl_Position.x * plane.x, gl_Position.x * plane.y, gl_Position.y * plane.z);
+	vec3 rdir = rotateZ(dir, rotation);
+	vec3 rplane = rotateZ(plane, rotation);
+	ray = rdir + vec3(gl_Position.x * rplane.x, gl_Position.x * rplane.y, gl_Position.y * rplane.z);
+}
+
+vec3 rotateZ(vec3 v, float radians) {
+	mat3 rz = mat3(cos(radians), -sin(radians), 0,
+			   sin(radians), cos(radians), 0,
+			   0, 0, 1);
+	return rz * v;
 }
