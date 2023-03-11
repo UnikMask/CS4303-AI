@@ -29,7 +29,7 @@ public class RaycastingRenderer {
 			generateCanvas(graphics);
 		}
 		graphics.background(0);
-		shader.set("pos", pos.x, pos.y, 0.25f);
+		shader.set("pos", pos.x, pos.y, 0.35f);
 		shader.set("dir", dir.x, dir.y, 0);
 		shader.set("plane", plane.x, plane.y, plane.z);
 		graphics.shader(shader);

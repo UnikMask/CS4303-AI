@@ -73,19 +73,20 @@ void main() {
 		side = 2;
 	}
 
-	float intensity;
+	float dist;
 	if (side == 0) {
-		intensity = (12.0 - sideDist.x) / 12;
+		dist = sideDist.x;
 	} else if (side == 1) {
-		intensity = (12.0 - sideDist.y) / 12;
+		dist = sideDist.y;
 	} else {
-		intensity = (12.0 - sideDist.z) / 12;
+		dist = sideDist.z;
 	}
+	float intensity = (12.0 - dist) / 12.0;
 
 	vec4 light = vec4(1, 0.5, 0, 1);
 	if (side == 0 || side == 2) {
-		gl_FragColor = vec4(0.5, 0.5, 0.5, 1) * intensity * light;
+		gl_FragColor = vec4(0.5, 0.5, 0.5, 1) * max(0.1, intensity) * light;
 	} else if (side == 2) {
-		gl_FragColor = vec4(0.1, 0.1, 0.1, 1) *  intensity * light;
+		gl_FragColor = vec4(0.1, 0.1, 0.1, 1) *  max(0.1, intensity) * light;
 	}
 }
