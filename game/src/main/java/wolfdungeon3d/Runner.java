@@ -15,11 +15,14 @@ import wolfdungeon3d.Game.GameState;
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
 	static private final PVector MAIN_CTX_POS = new PVector(0, 0);
+	static private final PVector MOUSE_TRESHOLD = new PVector(30, 30);
 
 	PGraphics mainGraphicsCtx;
 	Game game;
 	RunnerState state = RunnerState.GAME;
 	HashSet<Character> heldKeys = new HashSet<>();
+	PVector mouseMovement = new PVector();
+	PVector lastMousePosition = new PVector();
 
 	static enum RunnerState {
 		MENU, GAME
@@ -36,9 +39,23 @@ public class Runner extends PApplet {
 			game.update();
 		}
 		if (state == RunnerState.GAME && game != null && game.getState() == GameState.EXPLORE) {
+			if (!((GLWindow) surface.getNative()).isPointerConfined()) {
+				((GLWindow) surface.getNative()).confinePointer(true);
+				((GLWindow) surface.getNative()).setPointerVisible(false);
+			}
+			PVector currentMousePosition = new PVector(mouseX, mouseY);
 			((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
-			((GLWindow) surface.getNative()).confinePointer(false);
-			((GLWindow) surface.getNative()).setPointerVisible(true);
+			PVector mvt = PVector.sub(currentMousePosition, new PVector(width / 2, height / 2));
+			mvt.x /= width;
+			mvt.y /= height;
+			mouseMovement = PVector.lerp(mvt, mouseMovement, 0.1f);
+			game.mouseMoved(mouseMovement);
+			lastMousePosition = currentMousePosition;
+		} else {
+			if (((GLWindow) surface.getNative()).isPointerConfined()) {
+				((GLWindow) surface.getNative()).confinePointer(false);
+				((GLWindow) surface.getNative()).setPointerVisible(true);
+			}
 		}
 	}
 

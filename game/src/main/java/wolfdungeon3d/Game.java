@@ -36,6 +36,7 @@ public class Game {
 	public void setUp() {
 		lvl = Level.generate(getLevelSize(floor), 69 + new Random(floor).nextInt());
 		player = new Entity(lvl.getStartPosition(), new Entity.Attributes(1, 1, 1, 1, 1, 1));
+		controller = new PlayerController(player, new InputSettings());
 	}
 
 	public void keyPressed(Character key) {
@@ -50,13 +51,17 @@ public class Game {
 		controller.onKeyHeld(key);
 	}
 
+	public void mouseMoved(PVector mvt) {
+		controller.onMouseMove(mvt);
+	}
+
 	public void update() {
 		if (state == GameState.LOADING && lvl == null) {
 			setUp();
 		} else if (state == GameState.LOADING && lvl != null) {
 			state = GameState.EXPLORE;
 		} else if (state == GameState.EXPLORE) {
-			player.setRotation(player.getRotation() + 0.01f);
+			// player.setRotation(player.getRotation() + 0.01f);
 
 		}
 	}

@@ -23,7 +23,8 @@ public class PlayerController implements EntityController {
 	}
 
 	public void onMouseMove(PVector mouseVelocity) {
-
+		float mvt = mouseVelocity.x;
+		e.setRotation(e.getRotation() + mvt * (-3));
 	}
 
 	public void onMouseClick(PVector mousePosition) {
