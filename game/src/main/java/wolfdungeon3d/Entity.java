@@ -115,6 +115,8 @@ public class Entity {
 	}
 
 	public void move(PVector dir) {
+		dir.rotate(direction);
+		velocity = PVector.add(velocity, dir);
 	}
 
 	//////////////////

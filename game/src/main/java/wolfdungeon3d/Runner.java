@@ -63,21 +63,21 @@ public class Runner extends PApplet {
 	// Input Handling //
 	////////////////////
 
-	public void keyPressed(Character c) {
-		if (!heldKeys.contains(c)) {
-			heldKeys.add(c);
+	public void keyPressed() {
+		if (!heldKeys.contains(key)) {
+			heldKeys.add(key);
 		}
 		if (game != null) {
-			game.keyHeld(c);
+			game.keyPressed(key);
 		}
 	}
 
-	public void keyReleased(Character c) {
-		if (heldKeys.contains(c)) {
-			heldKeys.remove(c);
+	public void keyReleased() {
+		if (heldKeys.contains(key)) {
+			heldKeys.remove(key);
 		}
 		if (game != null) {
-			game.keyReleased(c);
+			game.keyReleased(key);
 		}
 	}
 

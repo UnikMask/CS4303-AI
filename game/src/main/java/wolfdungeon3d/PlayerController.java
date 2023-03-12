@@ -15,16 +15,16 @@ public class PlayerController implements EntityController {
 	}
 
 	public void onKeyHeld(Character c) {
+		System.out.println("Character " + c + " Pressed!");
 		movementInputs.add(inputs.getCommand(c));
 	}
 
 	public void onKeyReleased(Character c) {
-
 	}
 
 	public void onMouseMove(PVector mouseVelocity) {
 		float mvt = mouseVelocity.x;
-		e.setRotation(e.getRotation() + mvt * (-3));
+		e.setRotation(e.getRotation() - mvt * inputs.getMouseSensitivity());
 	}
 
 	public void onMouseClick(PVector mousePosition) {
@@ -35,14 +35,15 @@ public class PlayerController implements EntityController {
 		PVector dir = new PVector();
 		for (Command c : movementInputs) {
 			if (c == Command.FORWARD)
-				dir.y = dir.y == -1f ? 0 : -1;
+				dir.y += dir.y == -1f ? 0 : -1;
 			else if (c == Command.BACKWARD)
-				dir.y = dir.y == 1f ? 0 : -1;
+				dir.y += dir.y == 1f ? 0 : 1;
 			else if (c == Command.LEFT)
-				dir.x = dir.x == 1f ? 0 : -1;
+				dir.x += dir.x == 1f ? 0 : 1;
 			else if (c == Command.RIGHT)
-				dir.x = dir.x == -1f ? 0 : 1;
+				dir.x += dir.x == -1f ? 0 : -1;
 		}
+		movementInputs = new HashSet<>();
 		e.move(dir);
 	}
 
