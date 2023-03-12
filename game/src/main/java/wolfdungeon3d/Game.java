@@ -38,8 +38,16 @@ public class Game {
 		player = new Entity(lvl.getStartPosition(), new Entity.Attributes(1, 1, 1, 1, 1, 1));
 	}
 
-	public void keyPressed() {
+	public void keyPressed(Character key) {
+		controller.onKeyPressed(key);
+	}
 
+	public void keyReleased(Character key) {
+		controller.onKeyReleased(key);
+	}
+
+	public void keyHeld(Character key) {
+		controller.onKeyHeld(key);
 	}
 
 	public void update() {
@@ -53,13 +61,22 @@ public class Game {
 		}
 	}
 
+	public PVector getPlane(PVector dir, PVector canvasDimensions, float fov) {
+		fov = (float) ((fov % 2 * Math.PI) - Math.PI);
+		if (fov >= Math.PI || fov <= 0) {
+			return null;
+		}
+		float yRatio = canvasDimensions.y / canvasDimensions.x;
+		float dist = PApplet.tan(fov / 2);
+		PVector plane = dir.cross(new PVector(0, 0, dist));
+		return PVector.add(plane, new PVector(0, 0, dir.mag() * dist * yRatio));
+	}
+
 	public void draw(PGraphics graphics) {
 		if (state == GameState.EXPLORE) {
 			PVector dir = PVector.mult(PVector.fromAngle(player.getRotation()), DIR_L);
 
-			PVector plane = PVector.add(
-					PVector.mult(PVector.fromAngle((float) (Math.PI / 2.0f) + player.getRotation()), PLANE_L),
-					new PVector(0, 0, PLANE_H));
+			PVector plane = getPlane(dir, new PVector(graphics.width, graphics.height), (float) Math.PI / 2);
 			renderer.draw(graphics, player.getPosition(), dir, plane, player.getRotation());
 		}
 	}

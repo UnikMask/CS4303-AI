@@ -7,6 +7,9 @@ uniform vec3 pos;
 uniform vec3 dir;
 uniform vec3 plane;
 uniform sampler2D texture;
+uniform sampler2D tile0;
+uniform sampler2D tile1;
+uniform sampler2D tile2;
 
 
 varying vec3 fPosition;
@@ -60,7 +63,7 @@ void main() {
 		} else {
 			sideDist.z += deltaDist.z;
 			map.z += tstep.z;
-			side = 2;
+			side = tstep.z == 1? 3: 2;
 			hit = true;
 		}
 		vec4 tile = texelFetch(texture, ivec2(map.x, map.y), 0);
@@ -69,11 +72,9 @@ void main() {
 		}
 		step += 1;
 	}
-	if (step >= 20) {
-		side = 2;
-	}
 
 	float dist;
+	vec3 texPos;
 	if (side == 0) {
 		dist = sideDist.x;
 	} else if (side == 1) {
@@ -81,12 +82,18 @@ void main() {
 	} else {
 		dist = sideDist.z;
 	}
-	float intensity = (12.0 - dist) / 12.0;
+	texPos = fract(pos + dist * ray);
 
-	vec4 light = vec4(1, 0.5, 0, 1);
-	if (side == 0 || side == 2) {
-		gl_FragColor = vec4(0.5, 0.5, 0.5, 1) * max(0.1, intensity) * light;
+	if (side == 0) {
+		gl_FragColor = texture2D(tile0, vec2(texPos.y, 1- texPos.z));
+	} else if (side == 1) {
+		gl_FragColor = texture2D(tile0, vec2(texPos.x, 1 - texPos.z));
 	} else if (side == 2) {
-		gl_FragColor = vec4(0.1, 0.1, 0.1, 1) *  max(0.1, intensity) * light;
+		gl_FragColor = texture2D(tile1, vec2(texPos.x, 1 - texPos.y));
+	} else if (side == 3) {
+		gl_FragColor = texture2D(tile2, vec2(texPos.x, 1 - texPos.y));
 	}
+	vec4 light = vec4(1, 1, 0.6, 1);
+	float intensity = ((24.0 - dist) / 24.0) * dot(normalize(dir), ray);
+	gl_FragColor *= max(0.4, intensity) * light;
 }

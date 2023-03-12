@@ -22,9 +22,10 @@ public class Level {
 
 	// Enum for tiles - maps tile to number.
 	enum Tile {
-		WALL(0), ROOM(1), CENTER(2);
+		WALL(0, "wall.png"), ROOM(1, "floor.png"), CENTER(2, "ceiling.jpg");
 
 		int num;
+		String tex;
 
 		static Tile getTile(int n) {
 			if (n == 0) {
@@ -37,8 +38,9 @@ public class Level {
 			return WALL;
 		}
 
-		Tile(int num) {
+		Tile(int num, String tex) {
 			this.num = num;
+			this.tex = tex;
 		}
 	}
 
