@@ -3,6 +3,8 @@
  */
 package wolfdungeon3d;
 
+import java.util.HashSet;
+
 import com.jogamp.newt.opengl.GLWindow;
 
 import processing.core.PApplet;
@@ -17,10 +19,54 @@ public class Runner extends PApplet {
 	PGraphics mainGraphicsCtx;
 	Game game;
 	RunnerState state = RunnerState.GAME;
+	HashSet<Character> heldKeys = new HashSet<>();
 
 	static enum RunnerState {
 		MENU, GAME
 	}
+
+	// Main update loop
+	public void update() {
+		if (state == RunnerState.GAME && game == null) {
+			game = new Game(this);
+		} else if (state == RunnerState.GAME && game != null) {
+			for (Character k : heldKeys) {
+				game.keyHeld(k);
+			}
+			game.update();
+		}
+		if (state == RunnerState.GAME && game != null && game.getState() == GameState.EXPLORE) {
+			((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
+			((GLWindow) surface.getNative()).confinePointer(false);
+			((GLWindow) surface.getNative()).setPointerVisible(true);
+		}
+	}
+
+	////////////////////
+	// Input Handling //
+	////////////////////
+
+	public void keyPressed(Character c) {
+		if (!heldKeys.contains(c)) {
+			heldKeys.add(c);
+		}
+		if (game != null) {
+			game.keyHeld(c);
+		}
+	}
+
+	public void keyReleased(Character c) {
+		if (heldKeys.contains(c)) {
+			heldKeys.remove(c);
+		}
+		if (game != null) {
+			game.keyReleased(c);
+		}
+	}
+
+	///////////////////////
+	// PApplet Functions //
+	///////////////////////
 
 	public void setup() {
 		frameRate(60);
@@ -42,19 +88,6 @@ public class Runner extends PApplet {
 		}
 		mainGraphicsCtx.endDraw();
 		image(mainGraphicsCtx, MAIN_CTX_POS.x, MAIN_CTX_POS.y);
-	}
-
-	public void update() {
-		if (state == RunnerState.GAME && game == null) {
-			game = new Game(this);
-		} else if (state == RunnerState.GAME && game != null) {
-			game.update();
-		}
-		if (state == RunnerState.GAME && game != null && game.getState() == GameState.EXPLORE) {
-			((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
-			((GLWindow) surface.getNative()).confinePointer(false);
-			((GLWindow) surface.getNative()).setPointerVisible(true);
-		}
 	}
 
 	public static void main(String[] args) {
