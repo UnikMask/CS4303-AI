@@ -17,6 +17,7 @@ public class Entity {
 	private float hp;
 	private int level = 1;
 	private int xp = 0;
+	private boolean hostile = false;
 	Attributes attributes;
 	Attributes affectAttributes;
 
@@ -92,6 +93,14 @@ public class Entity {
 
 	public Attributes getAttributes() {
 		return affectAttributes;
+	}
+
+	public boolean isHostile() {
+		return hostile;
+	}
+
+	public void setHostile(boolean hostility) {
+		this.hostile = hostility;
 	}
 
 	////////////////////

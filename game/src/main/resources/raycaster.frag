@@ -15,7 +15,6 @@ uniform sampler2D tile2;
 varying vec3 fPosition;
 
 void main() {
-
 	vec3 ray = normalize(dir + (fPosition * plane));
 	// Get ray delta distances.
 	vec3 deltaDist = vec3(100, 100, 100);
@@ -50,8 +49,8 @@ void main() {
 
 	bool hit = false;
 	int side = 0;
-	int step = 0;
-	while (!hit && step < 20) {
+	vec4 tile = vec4(0, 0, 0, 1);
+	while (!hit) {
 		if (sideDist.x < sideDist.y && sideDist.x < sideDist.z) {
 			sideDist.x += deltaDist.x;
 			map.x += tstep.x;
@@ -66,34 +65,38 @@ void main() {
 			side = tstep.z == 1? 3: 2;
 			hit = true;
 		}
-		vec4 tile = texelFetch(texture, ivec2(map.x, map.y), 0);
-		if (tile.xyz == vec3(0, 0, 0)) {
+		tile = texelFetch(texture, ivec2(map.x, map.y), 0);
+		if (tile.rgb != vec3(1,1,1)) { // Hit something that isn't space.
 			hit = true;
 		}
-		step += 1;
 	}
 
 	float dist;
-	vec3 texPos;
 	if (side == 0) {
-		dist = sideDist.x;
+		dist = sideDist.x - deltaDist.x;
 	} else if (side == 1) {
-		dist = sideDist.y;
+		dist = sideDist.y - deltaDist.y;
 	} else {
-		dist = sideDist.z;
+		dist = sideDist.z - deltaDist.z;
 	}
-	texPos = fract(pos + dist * ray);
+	vec3 texPosp = fract(pos + dist * ray);
+	vec2 texPos = side == 0? vec2(texPosp.y, 1 - texPosp.z):
+		side == 1? vec2(texPosp.x, 1 - texPosp.z):
+		vec2(texPosp.x, 1 - texPosp.y);
 
-	if (side == 0) {
-		gl_FragColor = texture2D(tile0, vec2(texPos.y, 1- texPos.z));
-	} else if (side == 1) {
-		gl_FragColor = texture2D(tile0, vec2(texPos.x, 1 - texPos.z));
+	if (side == 0 || side == 1) {
+		if (tile.rgb == vec3(1, 1, 1) || tile.rgb == vec3(0, 0, 0)) {
+			gl_FragColor = texture2D(tile0, vec2(texPos.x, 1 - texPos.y));
+		} else {
+			gl_FragColor = tile;
+		}
 	} else if (side == 2) {
 		gl_FragColor = texture2D(tile1, vec2(texPos.x, 1 - texPos.y));
-	} else if (side == 3) {
+	} else {
 		gl_FragColor = texture2D(tile2, vec2(texPos.x, 1 - texPos.y));
 	}
+
 	vec4 light = vec4(1, 1, 0.6, 1);
 	float intensity = ((24.0 - dist) / 24.0) * dot(normalize(dir), ray);
-	gl_FragColor *= max(0.4, intensity) * light;
+	gl_FragColor *= intensity * light;
 }

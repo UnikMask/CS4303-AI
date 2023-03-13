@@ -3,8 +3,10 @@ package wolfdungeon3d;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Function;
 
@@ -19,13 +21,17 @@ public class Level {
 	private PVector size;
 	private int[][] grid;
 	private PVector startPosition;
+	private List<EntityBehaviour> behaviours;
+	private Entity player;
 
 	// Enum for tiles - maps tile to number.
 	enum Tile {
-		WALL(0, "wall.png"), ROOM(1, "floor.png"), CENTER(2, "ceiling.jpg");
+		WALL(0, "wall.png", 0), ROOM(1, "floor.png", 0xffffffff), CENTER(2, "ceiling.jpg", 0xff00ff00),
+		E_IDLE(3, "", 0xffff0000), E_ATTACK(4, "", 0xffff0000);
 
 		int num;
 		String tex;
+		int color;
 
 		static Tile getTile(int n) {
 			if (n == 0) {
@@ -34,14 +40,25 @@ public class Level {
 				return ROOM;
 			} else if (n == 2) {
 				return CENTER;
+			} else if (n == 3) {
+				return E_IDLE;
+			} else if (n == 4) {
+				return E_ATTACK;
 			}
 			return WALL;
 		}
 
-		Tile(int num, String tex) {
+		Tile(int num, String tex, int color) {
 			this.num = num;
 			this.tex = tex;
+			this.color = color;
 		}
+	}
+
+	class EntityBehaviour {
+		Entity e;
+		PVector startPoint;
+		PVector endPoint;
 	}
 
 	/////////////////////////
@@ -59,8 +76,23 @@ public class Level {
 		return Tile.WALL;
 	}
 
+	public Tile getTile(int x, int y, int[][] grid) {
+		if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
+			return Tile.getTile(grid[y][x]);
+		}
+		return Tile.WALL;
+	}
+
 	public PVector getStartPosition() {
 		return startPosition;
+	}
+
+	public List<EntityBehaviour> getEntities() {
+		return behaviours;
+	}
+
+	public void setPlayer(Entity e) {
+		this.player = e;
 	}
 
 	//////////////////////
@@ -116,9 +148,9 @@ public class Level {
 		BinaryNode root = ret.generatePartitions(rGenRandom, size);
 		ArrayList<Room> rooms = ret.generateRoomsFromPartition(root, rGenRandom);
 		ret.generateCorridors(root, rGenRandom);
-		ret.startPosition = PVector.add(rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size()).pos,
-				new PVector(1.5f, 1.5f));
-		ret.grid[(int) ret.startPosition.y][(int) ret.startPosition.x] = Tile.CENTER.num;
+		Room startingRoom = rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size());
+		ret.startPosition = PVector.add(startingRoom.pos, new PVector(1.5f, 1.5f));
+		ret.generateEntities(rGenRandom, rooms, startingRoom);
 		return ret;
 	}
 
@@ -130,21 +162,27 @@ public class Level {
 		IntTuple size = new IntTuple(grid[0].length, grid.length);
 		PImage image = applet.createImage(size.a, size.b, PApplet.RGB);
 		image.loadPixels();
+		int[][] finalGrid = getGridWithItems();
 		for (int i = 0; i < image.pixels.length; i++) {
-			Tile tile = getTile(i % size.a, i / size.a);
-			switch (tile) {
-			case WALL:
-				image.pixels[i] = applet.color(0, 0, 0);
-				break;
-			case ROOM:
-				image.pixels[i] = applet.color(255, 255, 255, 0);
-				break;
-			default:
-				image.pixels[i] = applet.color(0, 255, 0);
-			}
+			image.pixels[i] = getTile(i % size.a, i / size.a, finalGrid).color;
 		}
 		image.updatePixels();
 		return image;
+	}
+
+	public int[][] getGridWithItems() {
+		int[][] retGrid = new int[grid.length][];
+		for (int i = 0; i < grid.length; i++) {
+			retGrid[i] = Arrays.copyOf(grid[i], grid[i].length);
+		}
+		for (Entity e : behaviours.stream().map((b) -> b.e).collect(Collectors.toList())) {
+			if (!e.equals(player)) {
+				IntTuple pos = new IntTuple(e.getPosition());
+				System.out.println(e.getPosition());
+				retGrid[pos.b][pos.a] = e.isHostile() ? Tile.E_ATTACK.num : Tile.E_IDLE.num;
+			}
+		}
+		return retGrid;
 	}
 
 	/////////////////////
@@ -293,6 +331,25 @@ public class Level {
 		}
 	}
 
+	private void generateEntities(Random randomizer, List<Room> rooms, Room playerRoom) {
+		behaviours = new ArrayList<>();
+		for (Room room : rooms.stream().filter((r) -> r != playerRoom).collect(Collectors.toList())) {
+			EntityBehaviour behaviour = new EntityBehaviour();
+			boolean xdir = randomizer.nextBoolean();
+			if (xdir) {
+				behaviour.startPoint = new PVector(1, Math.abs(randomizer.nextInt()) % (room.size.y - 1));
+				behaviour.endPoint = new PVector(Math.abs(randomizer.nextInt()) % (room.size.y - 1) - 1,
+						behaviour.startPoint.y);
+			} else {
+				behaviour.startPoint = new PVector(Math.abs(randomizer.nextInt()) % (room.size.x - 1), 1);
+				behaviour.endPoint = new PVector(behaviour.startPoint.x,
+						Math.abs(randomizer.nextInt()) % (room.size.y - 1) - 1);
+			}
+			behaviour.e = new Entity(behaviour.startPoint, new Entity.Attributes(1, 1, 1, 1, 1, 1));
+			behaviours.add(behaviour);
+		}
+	}
+
 	//////////////////////
 	// Object Overrides //
 	//////////////////////
@@ -300,9 +357,28 @@ public class Level {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		for (int[] row : grid) {
+		int[][] finalGrid = getGridWithItems();
+		for (int[] row : finalGrid) {
 			for (int cell : row) {
-				sb.append(cell == 1 ? "  " : cell == 2 ? "CC" : "██");
+				sb.append(cell == 1 ? "  " : cell == 2 ? "CC" : cell == 3 ? "EE" : "██");
+			}
+			sb.append('\n');
+		}
+		return sb.toString();
+	}
+
+	public String stringWithSpecials(IntTuple... specials) {
+		StringBuilder sb = new StringBuilder();
+		int[][] grid = getGridWithItems();
+		for (int i = 0; i < grid.length; i++) {
+			loop: for (int j = 0; j < grid[i].length; j++) {
+				for (int k = 0; k < specials.length; k++) {
+					if (i == specials[k].b && j == specials[k].a) {
+						sb.append(k == 0 ? "11" : k == 1 ? "22" : "33");
+						continue loop;
+					}
+				}
+				sb.append(grid[i][j] == 1 ? "  " : grid[i][j] == 2 ? "CC" : grid[i][j] == 3 ? "EE" : "██");
 			}
 			sb.append('\n');
 		}

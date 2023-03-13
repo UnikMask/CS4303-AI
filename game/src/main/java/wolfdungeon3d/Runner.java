@@ -15,7 +15,6 @@ import wolfdungeon3d.Game.GameState;
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
 	static private final PVector MAIN_CTX_POS = new PVector(0, 0);
-	static private final PVector MOUSE_TRESHOLD = new PVector(30, 30);
 
 	PGraphics mainGraphicsCtx;
 	Game game;
@@ -44,12 +43,15 @@ public class Runner extends PApplet {
 				((GLWindow) surface.getNative()).setPointerVisible(false);
 			}
 			PVector currentMousePosition = new PVector(mouseX, mouseY);
-			((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
-			PVector mvt = PVector.sub(currentMousePosition, new PVector(width / 2, height / 2));
-			mvt.x /= width;
-			mvt.y /= height;
-			mouseMovement = PVector.lerp(mvt, mouseMovement, 0.1f);
+			if (mouseX != width / 2 || mouseY != height / 2) {
+				((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
+				PVector mvt = PVector.sub(currentMousePosition, new PVector(width / 2, height / 2));
+				mvt.x /= width;
+				mvt.y /= height;
+				mouseMovement = PVector.lerp(mouseMovement, mvt, 0.3f);
+			}
 			game.mouseMoved(mouseMovement);
+			mouseMovement = PVector.lerp(mouseMovement, new PVector(), 0.3f);
 			lastMousePosition = currentMousePosition;
 		} else {
 			if (((GLWindow) surface.getNative()).isPointerConfined()) {
@@ -93,13 +95,15 @@ public class Runner extends PApplet {
 	}
 
 	public void settings() {
-		size(1920, 1080, PApplet.P3D);
+		size(1920, 1080, PApplet.P2D);
 		fullScreen();
 	}
 
 	public void draw() {
 		update();
+		mainGraphicsCtx.colorMode(PGraphics.ARGB);
 		mainGraphicsCtx.beginDraw();
+		mainGraphicsCtx.blendMode(PGraphics.BLEND);
 		if (state == RunnerState.GAME && game != null) {
 			game.draw(mainGraphicsCtx);
 		}

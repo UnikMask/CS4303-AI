@@ -1,14 +1,17 @@
 package wolfdungeon3d;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
+import wolfdungeon3d.Level.Tile;
 
 public class Game {
 	private static final PVector BASE_FLOOR_SIZE = new PVector(25, 25);
@@ -102,21 +105,54 @@ public class Game {
 				}
 				e.setVelocity(PVector.mult(e.getVelocity(), 0.8f));
 				e.setPosition(PVector.add(e.getPosition(), PVector.mult(e.getVelocity(), (float) deltaT)));
+				correctCollisions(e);
 			}
 		}
+		System.out.println(lvl.stringWithSpecials(new IntTuple(player.getPosition())));
 	}
 
 	public void correctCollisions(Entity e) {
 		PVector minBounds = PVector.sub(e.getPosition(), ENTITY_AABB);
 		PVector maxBounds = PVector.add(e.getPosition(), ENTITY_AABB);
 
-		IntTuple pos = new IntTuple(e.getPosition());
-		List<PVector> corners = Arrays.asList(minBounds, new PVector(minBounds.x, maxBounds.y),
-				new PVector(maxBounds.x, minBounds.y), maxBounds);
+		List<PVector> corners = Arrays.asList(minBounds, new PVector(minBounds.x, maxBounds.y), maxBounds,
+				new PVector(maxBounds.x, minBounds.y));
+		List<PVector> normals = Arrays.asList(new PVector(0, 1), new PVector(1, 0), new PVector(0, -1),
+				new PVector(-1, 0));
 
-		PVector push = new PVector();
-		for (PVector corner : corners) {
-			IntTuple cornerPos = new IntTuple(corner);
+		for (int i = 0; i < corners.size(); i++) {
+			IntTuple cornerTilePos = new IntTuple(corners.get(i));
+
+			// Collision happened on corner
+			if (lvl.getTile(cornerTilePos.a, cornerTilePos.b) != Tile.ROOM) {
+				PVector nx = Math.abs(normals.get(i).x) > 0.1f ? normals.get(i) : normals.get((i + 1) % corners.size());
+				PVector ny = Math.abs(normals.get(i).y) > 0.1f ? normals.get(i) : normals.get((i + 1) % corners.size());
+
+				float pushX = nx.x > 0 ? 1 - (corners.get(i).x % 1.0f) : -corners.get(i).x % 1.0f;
+				float pushY = nx.y > 0 ? 1 - (corners.get(i).y % 1.0f) : -corners.get(i).y % 1.0f;
+				ArrayDeque<PVector> s = new ArrayDeque<>(Arrays.asList(nx, ny));
+				if (Math.abs(pushY) < Math.abs(pushX)) {
+					s = new ArrayDeque<>(Arrays.asList(ny, nx));
+				}
+
+				boolean resolved = false;
+				while (!s.isEmpty() && !resolved) {
+					PVector n = s.pop();
+					IntTuple nextTilePos = IntTuple.add(cornerTilePos, new IntTuple(n));
+					if (lvl.getTile(nextTilePos.a, nextTilePos.b) == Tile.ROOM) {
+						System.out.println("Collision resolved on an axis!");
+						float j = PVector.dot(n, e.getVelocity());
+						e.setVelocity(PVector.add(e.getVelocity(), PVector.mult(n, -(j + 1))));
+						resolved = true;
+					}
+				}
+				if (!resolved) {
+					System.out.println("Collision was unresolved! Resolving with both normals...");
+					PVector n = PVector.add(nx, ny);
+					float j = PVector.dot(n, e.getVelocity());
+					e.setVelocity(PVector.add(e.getVelocity(), PVector.mult(n, -(j + 1))));
+				}
+			}
 		}
 	}
 
@@ -128,13 +164,15 @@ public class Game {
 		if (state == GameState.EXPLORE) {
 			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
 
-			PVector plane = getPlane(dir, new PVector(graphics.width, graphics.height), (float) Math.PI / 2);
-			renderer.draw(graphics, player.getPosition(), dir, plane, player.getRotation());
+			PVector plane = getPlane(dir, new PVector(graphics.width, graphics.height), (float) (Math.PI / 1.7f));
+			if (plane != null) {
+				renderer.draw(graphics, lvl, player.getPosition(), dir, plane, player.getRotation());
+			}
 		}
 	}
 
 	private PVector getPlane(PVector dir, PVector canvasDimensions, float fov) {
-		fov = (float) ((fov % 2 * Math.PI) - Math.PI);
+		fov = (float) (fov % (2 * Math.PI));
 		if (fov >= Math.PI || fov <= 0) {
 			return null;
 		}
@@ -150,6 +188,7 @@ public class Game {
 
 	public Game(PApplet applet) {
 		setUp();
+		entities = new HashSet<>(lvl.getEntities().stream().map((b) -> b.e).collect(Collectors.toSet()));
 		renderer = new RaycastingRenderer(applet, lvl);
 	}
 }

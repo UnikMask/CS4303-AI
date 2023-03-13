@@ -15,7 +15,6 @@ public class PlayerController implements EntityController {
 	}
 
 	public void onKeyHeld(Character c) {
-		System.out.println("Character " + c + " Pressed!");
 		movementInputs.add(inputs.getCommand(c));
 	}
 
