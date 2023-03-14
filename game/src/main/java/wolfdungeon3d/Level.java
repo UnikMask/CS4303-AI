@@ -162,27 +162,23 @@ public class Level {
 		IntTuple size = new IntTuple(grid[0].length, grid.length);
 		PImage image = applet.createImage(size.a, size.b, PApplet.RGB);
 		image.loadPixels();
-		int[][] finalGrid = getGridWithItems();
 		for (int i = 0; i < image.pixels.length; i++) {
-			image.pixels[i] = getTile(i % size.a, i / size.a, finalGrid).color;
+			image.pixels[i] = getTile(i % size.a, i / size.a, grid).color;
 		}
 		image.updatePixels();
 		return image;
 	}
 
 	public int[][] getGridWithItems() {
-		int[][] retGrid = new int[grid.length][];
-		for (int i = 0; i < grid.length; i++) {
-			retGrid[i] = Arrays.copyOf(grid[i], grid[i].length);
-		}
-		for (Entity e : behaviours.stream().map((b) -> b.e).collect(Collectors.toList())) {
-			if (!e.equals(player)) {
-				IntTuple pos = new IntTuple(e.getPosition());
-				System.out.println(e.getPosition());
-				retGrid[pos.b][pos.a] = e.isHostile() ? Tile.E_ATTACK.num : Tile.E_IDLE.num;
-			}
-		}
-		return retGrid;
+		/*
+		 * int[][] retGrid = new int[grid.length][]; for (int i = 0; i < grid.length;
+		 * i++) { retGrid[i] = Arrays.copyOf(grid[i], grid[i].length); } for (Entity e :
+		 * behaviours.stream().map((b) -> b.e).collect(Collectors.toList())) { if
+		 * (!e.equals(player)) { IntTuple pos = new IntTuple(e.getPosition());
+		 * System.out.println(e.getPosition()); retGrid[pos.b][pos.a] = e.isHostile() ?
+		 * Tile.E_ATTACK.num : Tile.E_IDLE.num; } } return retGrid;
+		 */
+		return grid;
 	}
 
 	/////////////////////
@@ -361,24 +357,6 @@ public class Level {
 		for (int[] row : finalGrid) {
 			for (int cell : row) {
 				sb.append(cell == 1 ? "  " : cell == 2 ? "CC" : cell == 3 ? "EE" : "██");
-			}
-			sb.append('\n');
-		}
-		return sb.toString();
-	}
-
-	public String stringWithSpecials(IntTuple... specials) {
-		StringBuilder sb = new StringBuilder();
-		int[][] grid = getGridWithItems();
-		for (int i = 0; i < grid.length; i++) {
-			loop: for (int j = 0; j < grid[i].length; j++) {
-				for (int k = 0; k < specials.length; k++) {
-					if (i == specials[k].b && j == specials[k].a) {
-						sb.append(k == 0 ? "11" : k == 1 ? "22" : "33");
-						continue loop;
-					}
-				}
-				sb.append(grid[i][j] == 1 ? "  " : grid[i][j] == 2 ? "CC" : grid[i][j] == 3 ? "EE" : "██");
 			}
 			sb.append('\n');
 		}

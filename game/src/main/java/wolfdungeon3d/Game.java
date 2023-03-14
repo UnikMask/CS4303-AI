@@ -108,7 +108,6 @@ public class Game {
 				correctCollisions(e);
 			}
 		}
-		System.out.println(lvl.stringWithSpecials(new IntTuple(player.getPosition())));
 	}
 
 	public void correctCollisions(Entity e) {
@@ -140,14 +139,12 @@ public class Game {
 					PVector n = s.pop();
 					IntTuple nextTilePos = IntTuple.add(cornerTilePos, new IntTuple(n));
 					if (lvl.getTile(nextTilePos.a, nextTilePos.b) == Tile.ROOM) {
-						System.out.println("Collision resolved on an axis!");
 						float j = PVector.dot(n, e.getVelocity());
 						e.setVelocity(PVector.add(e.getVelocity(), PVector.mult(n, -(j + 1))));
 						resolved = true;
 					}
 				}
 				if (!resolved) {
-					System.out.println("Collision was unresolved! Resolving with both normals...");
 					PVector n = PVector.add(nx, ny);
 					float j = PVector.dot(n, e.getVelocity());
 					e.setVelocity(PVector.add(e.getVelocity(), PVector.mult(n, -(j + 1))));

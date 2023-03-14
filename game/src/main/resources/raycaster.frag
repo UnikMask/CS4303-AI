@@ -83,8 +83,9 @@ void main() {
 	vec2 texPos = side == 0? vec2(texPosp.y, 1 - texPosp.z):
 		side == 1? vec2(texPosp.x, 1 - texPosp.z):
 		vec2(texPosp.x, 1 - texPosp.y);
+	float depth = dot(dir, ray) * dist;
 
-	if (side == 0 || side == 1) {
+	/*if (side == 0 || side == 1) {
 		if (tile.rgb == vec3(1, 1, 1) || tile.rgb == vec3(0, 0, 0)) {
 			gl_FragColor = texture2D(tile0, vec2(texPos.x, 1 - texPos.y));
 		} else {
@@ -94,9 +95,17 @@ void main() {
 		gl_FragColor = texture2D(tile1, vec2(texPos.x, 1 - texPos.y));
 	} else {
 		gl_FragColor = texture2D(tile2, vec2(texPos.x, 1 - texPos.y));
+	}*/
+	if (side == 0) {
+		gl_FragColor = vec4(0, texPos.x,  1 - texPos.y, 1);
+	} else if (side == 1) {
+		gl_FragColor = vec4(texPos.x, 0, 1 - texPos.y, 1);
+	} else {
+		gl_FragColor = vec4(texPos.x, 1 - texPos.y, 0, 1);
 	}
 
 	vec4 light = vec4(1, 1, 0.6, 1);
 	float intensity = ((24.0 - dist) / 24.0) * dot(normalize(dir), ray);
 	gl_FragColor *= intensity * light;
+	gl_FragDepth = depth / 24;
 }
