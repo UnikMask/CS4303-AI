@@ -46,27 +46,34 @@ public class RaycastingRenderer {
 		raycastingShader.set("tile0", tileTextures[0]);
 		raycastingShader.set("tile1", tileTextures[1]);
 		raycastingShader.set("tile2", tileTextures[2]);
+		raycastingShader.set("screenSize", (float) graphics.width, (float) graphics.height);
 
-		graphics.pushMatrix();
-		// graphics.translate(0, 0, -3);
-		// graphics.lights();
 		graphics.background(0);
 		graphics.shader(raycastingShader);
 		graphics.shape(canvas, 0, 0);
+
+		graphics.resetShader();
+
+		graphics.pushMatrix();
+		graphics.translate(0, 0, 0.5f);
+		PShape newShape = graphics.createShape();
+
+		newShape.beginShape();
+		newShape.vertex(0, 0, 0);
+		newShape.vertex(0, graphics.height, 0);
+		newShape.vertex(graphics.width, graphics.height, 0);
+		newShape.vertex(graphics.width, 0, 0);
+		newShape.endShape(PConstants.CLOSE);
+		newShape.fill(graphics.color(255, 128, 0, 255));
+		graphics.shape(canvas, 0, 0);
 		graphics.popMatrix();
-		// graphics.translate(0, 0, 0.1f);
-		/*
-		 * graphics.resetShader();
-		 *
-		 * graphics.pushMatrix(); graphics.translate(0, 0, -8f); graphics.shape(canvas,
-		 * 0, 0); graphics.popMatrix();
-		 */
 
 	}
 
 	public RaycastingRenderer(PApplet applet, Level level) {
 		this.applet = applet;
-		raycastingShader = applet.loadShader("raycaster.frag", "raycaster.vert");
+		// raycastingShader = applet.loadShader("raycaster.frag", "raycaster.vert");
+		raycastingShader = applet.loadShader("raycaster.frag");
 		tileTextures = new PImage[3];
 		tileTextures[0] = applet.loadImage(Tile.WALL.tex);
 		tileTextures[1] = applet.loadImage(Tile.ROOM.tex);

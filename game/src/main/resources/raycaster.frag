@@ -6,16 +6,15 @@ precision mediump int
 uniform vec3 pos;
 uniform vec3 dir;
 uniform vec3 plane;
+uniform vec2 screenSize;
 uniform sampler2D texture;
 uniform sampler2D tile0;
 uniform sampler2D tile1;
 uniform sampler2D tile2;
 
-
-varying vec3 fPosition;
-
 void main() {
-	vec3 ray = normalize(dir + (fPosition * plane));
+	vec3 coords = vec3(gl_FragCoord.xyz / vec3(screenSize.x, screenSize.y, 1)) * 2 - vec3(1, 1, 1);
+	vec3 ray = normalize(dir + (vec3(coords.x, coords.x, coords.y) * plane));
 	// Get ray delta distances.
 	vec3 deltaDist = vec3(100, 100, 100);
 	if (ray.x != 0) {
@@ -107,5 +106,5 @@ void main() {
 	vec4 light = vec4(1, 1, 0.6, 1);
 	float intensity = ((24.0 - dist) / 24.0) * dot(normalize(dir), ray);
 	gl_FragColor *= intensity * light;
-	gl_FragDepth = depth / 24;
+	gl_FragDepth = depth / 2;
 }

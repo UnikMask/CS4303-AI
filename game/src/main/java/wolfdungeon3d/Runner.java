@@ -90,7 +90,7 @@ public class Runner extends PApplet {
 	public void setup() {
 		frameRate(60);
 		mainGraphicsCtx = createGraphics((int) ((float) width * MAIN_CTX_PERCENT.x),
-				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P2D);
+				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P3D);
 
 	}
 
@@ -101,6 +101,7 @@ public class Runner extends PApplet {
 
 	public void draw() {
 		update();
+		background(128);
 		mainGraphicsCtx.colorMode(PGraphics.ARGB);
 		mainGraphicsCtx.beginDraw();
 		mainGraphicsCtx.blendMode(PGraphics.BLEND);
