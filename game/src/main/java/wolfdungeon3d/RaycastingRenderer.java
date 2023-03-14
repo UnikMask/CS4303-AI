@@ -25,19 +25,19 @@ public class RaycastingRenderer {
 		canvas.vertex(graphics.width, graphics.height, 0);
 		canvas.vertex(graphics.width, 0, 0);
 		canvas.endShape(PConstants.CLOSE);
-		canvas.fill(graphics.color(255, 255, 255, 255));
 	}
 
-	public void draw(PGraphics graphics, Level lvl, PVector pos, PVector dir, PVector plane, float rotation) {
+	public void draw(PGraphics graphics, Game game, PVector dir, PVector plane) {
 		if (canvas == null) {
 			generateCanvas(graphics);
 		}
-		canvas.setTexture(lvl.getGridImage(applet));
+		canvas.setTexture(game.getLevelImage(applet));
 
 		// Draw depth buffer
 		if (depthg == null) {
 			depthg = applet.createGraphics(graphics.width, graphics.height);
 		}
+		PVector pos = game.getPlayer().getPosition();
 
 		// Draw main graphics window
 		raycastingShader.set("pos", pos.x, pos.y, 0.35f);
@@ -63,8 +63,8 @@ public class RaycastingRenderer {
 		newShape.vertex(0, graphics.height, 0);
 		newShape.vertex(graphics.width, graphics.height, 0);
 		newShape.vertex(graphics.width, 0, 0);
-		newShape.endShape(PConstants.CLOSE);
 		newShape.fill(graphics.color(255, 128, 0, 255));
+		newShape.endShape(PConstants.CLOSE);
 		graphics.shape(canvas, 0, 0);
 		graphics.popMatrix();
 

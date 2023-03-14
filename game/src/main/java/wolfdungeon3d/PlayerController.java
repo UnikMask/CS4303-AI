@@ -11,7 +11,6 @@ public class PlayerController implements EntityController {
 	HashSet<Command> movementInputs = new HashSet<>();
 
 	public void onKeyPressed(Character c) {
-
 	}
 
 	public void onKeyHeld(Character c) {

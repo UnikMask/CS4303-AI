@@ -22,16 +22,16 @@ public class Level {
 	private int[][] grid;
 	private PVector startPosition;
 	private List<EntityBehaviour> behaviours;
-	private Entity player;
 
 	// Enum for tiles - maps tile to number.
 	enum Tile {
-		WALL(0, "wall.png", 0), ROOM(1, "floor.png", 0xffffffff), CENTER(2, "ceiling.jpg", 0xff00ff00),
-		E_IDLE(3, "", 0xffff0000), E_ATTACK(4, "", 0xffff0000);
+		WALL(0, "wall.png", 0, "██"), ROOM(1, "floor.png", 0xffffffff, "  "),
+		CENTER(2, "ceiling.jpg", 0xff00ff00, "CC");
 
 		int num;
 		String tex;
 		int color;
+		String print;
 
 		static Tile getTile(int n) {
 			if (n == 0) {
@@ -40,18 +40,15 @@ public class Level {
 				return ROOM;
 			} else if (n == 2) {
 				return CENTER;
-			} else if (n == 3) {
-				return E_IDLE;
-			} else if (n == 4) {
-				return E_ATTACK;
 			}
 			return WALL;
 		}
 
-		Tile(int num, String tex, int color) {
+		Tile(int num, String tex, int color, String print) {
 			this.num = num;
 			this.tex = tex;
 			this.color = color;
+			this.print = print;
 		}
 	}
 
@@ -89,10 +86,6 @@ public class Level {
 
 	public List<EntityBehaviour> getEntities() {
 		return behaviours;
-	}
-
-	public void setPlayer(Entity e) {
-		this.player = e;
 	}
 
 	//////////////////////
@@ -148,6 +141,7 @@ public class Level {
 		BinaryNode root = ret.generatePartitions(rGenRandom, size);
 		ArrayList<Room> rooms = ret.generateRoomsFromPartition(root, rGenRandom);
 		ret.generateCorridors(root, rGenRandom);
+
 		Room startingRoom = rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size());
 		ret.startPosition = PVector.add(startingRoom.pos, new PVector(1.5f, 1.5f));
 		ret.generateEntities(rGenRandom, rooms, startingRoom);
@@ -167,18 +161,6 @@ public class Level {
 		}
 		image.updatePixels();
 		return image;
-	}
-
-	public int[][] getGridWithItems() {
-		/*
-		 * int[][] retGrid = new int[grid.length][]; for (int i = 0; i < grid.length;
-		 * i++) { retGrid[i] = Arrays.copyOf(grid[i], grid[i].length); } for (Entity e :
-		 * behaviours.stream().map((b) -> b.e).collect(Collectors.toList())) { if
-		 * (!e.equals(player)) { IntTuple pos = new IntTuple(e.getPosition());
-		 * System.out.println(e.getPosition()); retGrid[pos.b][pos.a] = e.isHostile() ?
-		 * Tile.E_ATTACK.num : Tile.E_IDLE.num; } } return retGrid;
-		 */
-		return grid;
 	}
 
 	/////////////////////
@@ -353,10 +335,9 @@ public class Level {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		int[][] finalGrid = getGridWithItems();
-		for (int[] row : finalGrid) {
+		for (int[] row : grid) {
 			for (int cell : row) {
-				sb.append(cell == 1 ? "  " : cell == 2 ? "CC" : cell == 3 ? "EE" : "██");
+				sb.append(Tile.getTile(cell).print);
 			}
 			sb.append('\n');
 		}

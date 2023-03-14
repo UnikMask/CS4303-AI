@@ -1,6 +1,7 @@
 package wolfdungeon3d;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
+import processing.core.PImage;
 import processing.core.PVector;
 import wolfdungeon3d.Level.Tile;
 
@@ -35,6 +37,10 @@ public class Game {
 		EXPLORE, BATTLE, LOADING, INTRO
 	}
 
+	/////////////////////////
+	// Getters and Setters //
+	/////////////////////////
+
 	public PVector getLevelSize(int floor) {
 		return PVector.add(BASE_FLOOR_SIZE, PVector.mult(FLOOR_SIZE_INCREMENT, floor));
 	}
@@ -43,12 +49,56 @@ public class Game {
 		return state;
 	}
 
+	public Entity getPlayer() {
+		return player;
+	}
+
+	///////////////
+	// Rendering //
+	///////////////
+
 	public void setUp() {
 		lvl = Level.generate(getLevelSize(floor), new Date().getTime() + new Random(floor).nextInt());
+		entities = new HashSet<>(lvl.getEntities().stream().map((b) -> b.e).collect(Collectors.toSet()));
+
 		player = new Entity(lvl.getStartPosition(), new Entity.Attributes(1, 1, 1, 1, 1, 1));
 		controller = new PlayerController(player, new InputSettings());
 		controllers.add(controller);
 		entities.add(player);
+	}
+
+	public void update() {
+		if (lastFrameTime == 0) {
+			lastFrameTime = new Date().getTime();
+		}
+		double deltaT = ((float) (lastFrameTime - new Date().getTime())) / 1000.0;
+		lastFrameTime = new Date().getTime();
+
+		if (state == GameState.LOADING && lvl == null) {
+			setUp();
+		} else if (state == GameState.LOADING && lvl != null) {
+			state = GameState.EXPLORE;
+		} else if (state == GameState.EXPLORE) {
+			for (EntityController c : controllers) {
+				c.update();
+			}
+
+			for (Entity e : entities) {
+				if (e.getVelocity().mag() > MAX_V) {
+					e.setVelocity(PVector.mult(e.getVelocity().normalize(), MAX_V));
+				}
+				e.setVelocity(PVector.mult(e.getVelocity(), 0.8f));
+				e.setPosition(PVector.add(e.getPosition(), PVector.mult(e.getVelocity(), (float) deltaT)));
+				if (e == player) {
+					System.out.println("Player moved!");
+				}
+				correctCollisions(e);
+			}
+		}
+	}
+
+	public PImage getLevelImage(PApplet applet) {
+		return lvl.getGridImage(applet);
 	}
 
 	////////////////////
@@ -83,34 +133,7 @@ public class Game {
 		}
 	}
 
-	public void update() {
-		if (lastFrameTime == 0) {
-			lastFrameTime = new Date().getTime();
-		}
-		double deltaT = ((float) (lastFrameTime - new Date().getTime())) / 1000.0;
-		lastFrameTime = new Date().getTime();
-
-		if (state == GameState.LOADING && lvl == null) {
-			setUp();
-		} else if (state == GameState.LOADING && lvl != null) {
-			state = GameState.EXPLORE;
-		} else if (state == GameState.EXPLORE) {
-			for (EntityController c : controllers) {
-				c.update();
-			}
-
-			for (Entity e : entities) {
-				if (e.getVelocity().mag() > MAX_V) {
-					e.setVelocity(PVector.mult(e.getVelocity().normalize(), MAX_V));
-				}
-				e.setVelocity(PVector.mult(e.getVelocity(), 0.8f));
-				e.setPosition(PVector.add(e.getPosition(), PVector.mult(e.getVelocity(), (float) deltaT)));
-				correctCollisions(e);
-			}
-		}
-	}
-
-	public void correctCollisions(Entity e) {
+	private void correctCollisions(Entity e) {
 		PVector minBounds = PVector.sub(e.getPosition(), ENTITY_AABB);
 		PVector maxBounds = PVector.add(e.getPosition(), ENTITY_AABB);
 
@@ -160,10 +183,9 @@ public class Game {
 	public void draw(PGraphics graphics) {
 		if (state == GameState.EXPLORE) {
 			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
-
 			PVector plane = getPlane(dir, new PVector(graphics.width, graphics.height), (float) (Math.PI / 1.7f));
 			if (plane != null) {
-				renderer.draw(graphics, lvl, player.getPosition(), dir, plane, player.getRotation());
+				renderer.draw(graphics, this, dir, plane);
 			}
 		}
 	}
@@ -185,7 +207,6 @@ public class Game {
 
 	public Game(PApplet applet) {
 		setUp();
-		entities = new HashSet<>(lvl.getEntities().stream().map((b) -> b.e).collect(Collectors.toSet()));
 		renderer = new RaycastingRenderer(applet, lvl);
 	}
 }

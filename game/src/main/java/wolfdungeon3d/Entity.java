@@ -5,7 +5,7 @@ import java.util.stream.IntStream;
 
 import processing.core.PVector;
 
-public class Entity {
+public class Entity implements Sprite {
 	private static final int INITIATIVE_DICE = 20;
 	private static final float HP_PER_LEVEL = 5;
 	private static final int XP_BASE = 128;
