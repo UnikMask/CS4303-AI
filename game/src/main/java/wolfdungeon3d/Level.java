@@ -18,6 +18,7 @@ public class Level {
 	private static final PVector MAX_ROOM_SIZE = new PVector(20, 20);
 	private static final PVector MIN_ROOM_SIZE = new PVector(5, 5);
 	private static final PVector MIN_DIV_SIZE = new PVector(10, 10);
+	private final PImage spiritTex;
 	private PVector size;
 	private int[][] grid;
 	private PVector startPosition;
@@ -133,8 +134,8 @@ public class Level {
 		}
 	}
 
-	public static Level generate(PVector size, long seed) {
-		Level ret = new Level(size);
+	public static Level generate(PVector size, PApplet applet, int floor, long seed) {
+		Level ret = new Level(size, applet);
 
 		Random rGenRandom = new Random(seed);
 
@@ -143,8 +144,8 @@ public class Level {
 		ret.generateCorridors(root, rGenRandom);
 
 		Room startingRoom = rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size());
-		ret.startPosition = PVector.add(startingRoom.pos, new PVector(1.5f, 1.5f));
-		ret.generateEntities(rGenRandom, rooms, startingRoom);
+		ret.startPosition = PVector.add(startingRoom.pos, new PVector(1.5f, 1.5f, 0.35f));
+		ret.generateEntities(rGenRandom, floor, rooms, startingRoom);
 		return ret;
 	}
 
@@ -309,7 +310,7 @@ public class Level {
 		}
 	}
 
-	private void generateEntities(Random randomizer, List<Room> rooms, Room playerRoom) {
+	private void generateEntities(Random randomizer, int floor, List<Room> rooms, Room playerRoom) {
 		behaviours = new ArrayList<>();
 		for (Room room : rooms.stream().filter((r) -> r != playerRoom).collect(Collectors.toList())) {
 			EntityBehaviour behaviour = new EntityBehaviour();
@@ -324,7 +325,8 @@ public class Level {
 			 */
 			behaviour.startPoint = room.pos;
 			behaviour.endPoint = PVector.add(room.pos, PVector.sub(room.size, new PVector(1, 1)));
-			behaviour.e = new Entity(behaviour.startPoint, new Entity.Attributes(1, 1, 1, 1, 1, 1));
+			behaviour.e = new Entity(PVector.add(behaviour.startPoint, new PVector(0, 0, 0.25f)),
+					new PVector(0.5f, 0.5f), spiritTex, Attributes.getRandomAttributes(floor, randomizer));
 			behaviours.add(behaviour);
 		}
 	}
@@ -349,8 +351,9 @@ public class Level {
 	// Constructors //
 	//////////////////
 
-	public Level(PVector size) {
+	public Level(PVector size, PApplet applet) {
 		this.size = size;
+		this.spiritTex = applet.loadImage("sphere.png");
 		grid = new int[Math.round(size.y)][Math.round(size.x)];
 	}
 }

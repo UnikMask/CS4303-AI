@@ -4,14 +4,15 @@ import java.util.Random;
 import java.util.stream.IntStream;
 
 import processing.core.PVector;
+import processing.core.PImage;
 
 public class Entity implements Sprite {
 	private static final int INITIATIVE_DICE = 20;
 	private static final float HP_PER_LEVEL = 5;
 	private static final int XP_BASE = 128;
 	private static final int XP_PER_LEVEL = 32;
-	private static final PVector ENTITY_SIZE = new PVector(0.4f, 0.4f);
 
+	private PImage tex;
 	private PVector position;
 	private PVector velocity = new PVector();
 	private float direction = 0;
@@ -19,30 +20,9 @@ public class Entity implements Sprite {
 	private int level = 1;
 	private int xp = 0;
 	private boolean hostile = false;
+	private PVector size;
 	Attributes attributes;
 	Attributes affectAttributes;
-
-	static class Attributes {
-		int strength = 1;
-		int endurance = 1;
-		int dexterity = 1;
-		int luck = 1;
-		int focus = 1;
-		int intellect = 1;
-
-		public Attributes copy() {
-			return new Attributes(strength, endurance, dexterity, luck, focus, intellect);
-		}
-
-		public Attributes(int str, int end, int dex, int luc, int foc, int inte) {
-			strength = str;
-			endurance = end;
-			dexterity = dex;
-			luck = luc;
-			focus = foc;
-			intellect = inte;
-		}
-	}
 
 	/////////////////////////
 	// Getters and Setters //
@@ -104,9 +84,13 @@ public class Entity implements Sprite {
 		this.hostile = hostility;
 	}
 
+	public PImage getImage() {
+		return tex;
+	}
+
 	@Override
 	public PVector getSize() {
-		return ENTITY_SIZE.copy();
+		return size;
 	}
 
 	////////////////////
@@ -138,8 +122,10 @@ public class Entity implements Sprite {
 	// Constructors //
 	//////////////////
 
-	public Entity(PVector position, Attributes attr) {
+	public Entity(PVector position, PVector size, PImage tex, Attributes attr) {
 		this.position = position;
+		this.size = size;
+		this.tex = tex;
 		this.attributes = attr;
 		this.affectAttributes = attr.copy();
 	}

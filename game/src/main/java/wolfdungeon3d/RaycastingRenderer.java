@@ -44,7 +44,7 @@ public class RaycastingRenderer {
 		PVector pos = game.getPlayer().getPosition();
 
 		// Draw main graphics window
-		raycastingShader.set("pos", pos.x, pos.y, 0.35f);
+		raycastingShader.set("pos", pos.x, pos.y, pos.z);
 		raycastingShader.set("dir", dir.x, dir.y, 0);
 		raycastingShader.set("plane", plane.x, plane.y, plane.z);
 		raycastingShader.set("tile0", tileTextures[0]);
@@ -65,30 +65,32 @@ public class RaycastingRenderer {
 		// Draw entities
 		graphics.shader(spriteShader);
 		spriteShader.set("renderDistance", MAX_SPRITE_DRAW_DISTANCE);
-		System.out.println("\n\n New render: Player at pos - " + game.getPlayer().getPosition());
-		System.out.println("Player rotation: " + game.getPlayer().getRotation());
-		System.out.println("Dir: " + dir);
 		for (Sprite s : game.getSprites()) {
 			if (s == game.getPlayer()) {
 				continue;
 			}
-			ArrayList<PVector> verts = new ArrayList<>(Arrays.asList(new PVector(0, 0), new PVector(0, s.getSize().y),
-					new PVector(s.getSize().x, s.getSize().y), new PVector(s.getSize().x, 0)));
-			PVector dist = PVector.sub(game.getPlayer().getPosition(), s.getPosition());
+			ArrayList<PVector> verts = new ArrayList<>(
+					Arrays.asList(new PVector(0, 0), new PVector(0, 1), new PVector(1, 1), new PVector(1, 0)));
+			PVector dist = PVector.sub(s.getPosition(), game.getPlayer().getPosition());
 			float theta = game.getPlayer().getRotation();
 			PShape spriteShape = graphics.createShape();
 			spriteShape.beginShape();
 			float depth = -PVector.dot(dist, PVector.div(dir, dir.mag()));
-			for (PVector v : verts) {
+			float fovCot = new PVector(plane.x, plane.y).mag() / dir.mag();
+			for (PVector vt : verts) {
+				PVector v = new PVector(vt.x * s.getSize().x, vt.y * s.getSize().y);
 				v.sub(new PVector(s.getSize().x / 2, 0));
 				v = rotateY(v, theta);
-				v.add(new PVector(-dist.x, -0.35f, -dist.y));
+				v.add(new PVector(dist.x, dist.z, dist.y));
 				v = rotateY(v, -theta);
 				depth = v.z;
-				v = new PVector(v.x / (depth * graphics.width / graphics.height), v.y / (depth), 0);
+				v = new PVector(v.x / (fovCot * depth * graphics.width / graphics.height), v.y / (fovCot * depth), 0);
 				v = new PVector(v.x * graphics.width, -v.y * graphics.height);
 				v.add(graphics.width / 2, graphics.height / 2);
-				spriteShape.vertex(v.x, v.y);
+				spriteShape.vertex(v.x, v.y, vt.x, vt.y);
+			}
+			if (s.getImage() != null) {
+				spriteShape.texture(s.getImage());
 			}
 			spriteShape.endShape(PConstants.CLOSE);
 			spriteShader.set("depth", depth);

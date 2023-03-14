@@ -22,6 +22,7 @@ public class Game {
 	private static final float MAX_V = 3.0f;
 	private static final PVector ENTITY_AABB = new PVector(0.25f, 0.25f);
 
+	private PApplet applet;
 	private GameState state = GameState.LOADING;
 	private Entity player;
 	private HashSet<Entity> entities = new HashSet<>();
@@ -66,10 +67,10 @@ public class Game {
 	///////////////
 
 	public void setUp() {
-		lvl = Level.generate(getLevelSize(floor), new Date().getTime() + new Random(floor).nextInt());
+		lvl = Level.generate(getLevelSize(floor), applet, floor, new Date().getTime() + new Random(floor).nextInt());
 		entities = new HashSet<>(lvl.getEntities().stream().map((b) -> b.e).collect(Collectors.toSet()));
 
-		player = new Entity(lvl.getStartPosition(), new Entity.Attributes(1, 1, 1, 1, 1, 1));
+		player = new Entity(lvl.getStartPosition(), new PVector(0.5f, 0.5f), null, new Attributes(1, 1, 1, 1, 1, 1));
 		controller = new PlayerController(player, new InputSettings());
 		controllers.add(controller);
 		entities.add(player);
@@ -188,7 +189,7 @@ public class Game {
 	public void draw(PGraphics graphics) {
 		if (state == GameState.EXPLORE) {
 			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
-			PVector plane = getPlane(dir, new PVector(graphics.width, graphics.height), (float) (Math.PI / 1.7f));
+			PVector plane = getPlane(dir, new PVector(graphics.width, graphics.height), (float) (Math.PI / 2f));
 			if (plane != null) {
 				renderer.draw(graphics, this, dir, plane);
 			}
@@ -211,6 +212,7 @@ public class Game {
 	//////////////////
 
 	public Game(PApplet applet) {
+		this.applet = applet;
 		setUp();
 		renderer = new RaycastingRenderer(applet, lvl);
 	}
