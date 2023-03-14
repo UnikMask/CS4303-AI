@@ -313,16 +313,17 @@ public class Level {
 		behaviours = new ArrayList<>();
 		for (Room room : rooms.stream().filter((r) -> r != playerRoom).collect(Collectors.toList())) {
 			EntityBehaviour behaviour = new EntityBehaviour();
-			boolean xdir = randomizer.nextBoolean();
-			if (xdir) {
-				behaviour.startPoint = new PVector(1, Math.abs(randomizer.nextInt()) % (room.size.y - 1));
-				behaviour.endPoint = new PVector(Math.abs(randomizer.nextInt()) % (room.size.y - 1) - 1,
-						behaviour.startPoint.y);
-			} else {
-				behaviour.startPoint = new PVector(Math.abs(randomizer.nextInt()) % (room.size.x - 1), 1);
-				behaviour.endPoint = new PVector(behaviour.startPoint.x,
-						Math.abs(randomizer.nextInt()) % (room.size.y - 1) - 1);
-			}
+			/*
+			 * boolean xdir = randomizer.nextBoolean(); if (xdir) { behaviour.startPoint =
+			 * new PVector(1, Math.abs(randomizer.nextInt()) % (room.size.y - 1));
+			 * behaviour.endPoint = new PVector(Math.abs(randomizer.nextInt()) %
+			 * (room.size.y - 1) - 1, behaviour.startPoint.y); } else { behaviour.startPoint
+			 * = new PVector(Math.abs(randomizer.nextInt()) % (room.size.x - 1), 1);
+			 * behaviour.endPoint = new PVector(behaviour.startPoint.x,
+			 * Math.abs(randomizer.nextInt()) % (room.size.y - 1) - 1); }
+			 */
+			behaviour.startPoint = room.pos;
+			behaviour.endPoint = PVector.add(room.pos, PVector.sub(room.size, new PVector(1, 1)));
 			behaviour.e = new Entity(behaviour.startPoint, new Entity.Attributes(1, 1, 1, 1, 1, 1));
 			behaviours.add(behaviour);
 		}

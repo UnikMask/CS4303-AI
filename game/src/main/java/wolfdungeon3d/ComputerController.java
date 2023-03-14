@@ -9,21 +9,24 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 import processing.core.PVector;
+import wolfdungeon3d.Game.GameState;
+import wolfdungeon3d.Level.EntityBehaviour;
 import wolfdungeon3d.Level.Tile;
 
 public class ComputerController implements EntityController {
-	private Entity e;
-	private Level level;
 	private static final List<IntTuple> neighbours = Arrays.asList(new IntTuple(0, 1), new IntTuple(1, 0),
 			new IntTuple(0, -1), new IntTuple(-1, 0));
+	private Entity e;
+	private Game game;
+	private PVector idleStart;
+	private PVector idleEnd;
+	private ArrayList<IntTuple> currentPath;
+	private boolean wasHostile = false;
+	private boolean chasingStart = false;
 
 	/////////////////////////
 	// Getters and Setters //
 	/////////////////////////
-
-	public Level getLevel() {
-		return level;
-	}
 
 	public Entity getEntity() {
 		return e;
@@ -33,41 +36,47 @@ public class ComputerController implements EntityController {
 		this.e = e;
 	}
 
-	public void setLevel(Level level) {
-		this.level = level;
-	}
-
 	///////////////////////
 	// Interface Methods //
 	///////////////////////
 
 	// Unused
 	public void onKeyPressed(Character c) {
-
+		// ignored
 	}
 
 	// Unused
 	public void onKeyHeld(Character c) {
-
+		// ignored
 	}
 
 	// Unused
 	public void onKeyReleased(Character c) {
-
+		// ignored
 	}
 
 	// Unused
 	public void onMouseMove(PVector mouseVelocity) {
-
+		// ignored
 	}
 
 	// Unused
 	public void onMouseClick(PVector mousePosition) {
-
+		// ignored
 	}
 
 	public void update() {
-
+		/*
+		 * if (game.getState() == GameState.EXPLORE) { // Get next decision if
+		 * (!currentPath.isEmpty() && currentPath.get(0).equals(new
+		 * IntTuple(e.getPosition()))) { currentPath.remove(0); }
+		 *
+		 * if (e.isHostile()) { currentPath = getPath(new
+		 * IntTuple(game.getPlayer().getPosition()), wasHostile); wasHostile = true; }
+		 * else { wasHostile = false; if (chasingStart) { currentPath = getPath(new
+		 * IntTuple(idleEnd), false); } else { currentPath = getPath(new
+		 * IntTuple(idleStart), false); } } }
+		 */
 	}
 
 	public void getCombatTurn(Combat combat) {
@@ -91,8 +100,21 @@ public class ComputerController implements EntityController {
 		return new ArrayList<>(path);
 	}
 
-	public ArrayList<IntTuple> getPath(IntTuple target) {
+	public ArrayList<IntTuple> getPath(IntTuple target, boolean keepPath) {
 		IntTuple start = new IntTuple(e.getPosition());
+		ArrayList<IntTuple> path = new ArrayList<>();
+		if (keepPath && currentPath != null) {
+			int nPos = 0;
+			int dist = Integer.MAX_VALUE;
+			for (int i = 0; i < currentPath.size(); i++) {
+				if (getManhattanDist(currentPath.get(i), target) < dist) {
+					nPos = i;
+					dist = getManhattanDist(currentPath.get(i), target);
+				}
+			}
+			path.addAll(currentPath.subList(0, nPos));
+		}
+
 		HashMap<IntTuple, Integer> g = new HashMap<>();
 		HashMap<IntTuple, IntTuple> lastNode = new HashMap<>();
 		g.put(start, 0);
@@ -112,7 +134,8 @@ public class ComputerController implements EntityController {
 			}
 			for (IntTuple neighbour : neighbours) {
 				IntTuple newNode = IntTuple.add(neighbour, next);
-				if (level.getTile(newNode.a, newNode.b) == Tile.ROOM && getG(next, g) + 1 < getG(newNode, g)) {
+				if (game.getLevel().getTile(newNode.a, newNode.b) == Tile.ROOM
+						&& getG(next, g) + 1 < getG(newNode, g)) {
 					lastNode.put(newNode, next);
 					g.put(newNode, getG(next, g) + 1);
 					q.add(newNode);
@@ -120,7 +143,8 @@ public class ComputerController implements EntityController {
 			}
 		}
 
-		return getPath(q.peek(), start, lastNode);
+		path.addAll(getPath(q.peek(), start, lastNode));
+		return path;
 	}
 
 	private int getG(IntTuple o1, HashMap<IntTuple, Integer> g) {
@@ -135,9 +159,11 @@ public class ComputerController implements EntityController {
 	// Constructor //
 	/////////////////
 
-	public ComputerController(Entity e, Level level) {
-		this.e = e;
-		this.level = level;
+	public ComputerController(EntityBehaviour b, Game game) {
+		this.e = b.e;
+		this.idleStart = b.startPoint;
+		this.idleEnd = b.endPoint;
+		this.game = game;
 	}
 
 }

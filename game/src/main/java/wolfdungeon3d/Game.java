@@ -30,7 +30,7 @@ public class Game {
 	private PlayerController controller;
 	private RaycastingRenderer renderer;
 	private Level lvl;
-	private int floor = 10;
+	private int floor = 0;
 	private long lastFrameTime = 0;
 
 	static enum GameState {
@@ -51,6 +51,14 @@ public class Game {
 
 	public Entity getPlayer() {
 		return player;
+	}
+
+	public Level getLevel() {
+		return lvl;
+	}
+
+	public ArrayList<Sprite> getSprites() {
+		return new ArrayList<>(entities);
 	}
 
 	///////////////
@@ -89,9 +97,6 @@ public class Game {
 				}
 				e.setVelocity(PVector.mult(e.getVelocity(), 0.8f));
 				e.setPosition(PVector.add(e.getPosition(), PVector.mult(e.getVelocity(), (float) deltaT)));
-				if (e == player) {
-					System.out.println("Player moved!");
-				}
 				correctCollisions(e);
 			}
 		}

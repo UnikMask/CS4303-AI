@@ -10,6 +10,7 @@ public class Entity implements Sprite {
 	private static final float HP_PER_LEVEL = 5;
 	private static final int XP_BASE = 128;
 	private static final int XP_PER_LEVEL = 32;
+	private static final PVector ENTITY_SIZE = new PVector(0.4f, 0.4f);
 
 	private PVector position;
 	private PVector velocity = new PVector();
@@ -101,6 +102,11 @@ public class Entity implements Sprite {
 
 	public void setHostile(boolean hostility) {
 		this.hostile = hostility;
+	}
+
+	@Override
+	public PVector getSize() {
+		return ENTITY_SIZE.copy();
 	}
 
 	////////////////////
