@@ -1,6 +1,7 @@
 package wolfdungeon3d;
 
 import processing.core.PApplet;
+import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PShape;
 import processing.core.PVector;
@@ -21,7 +22,7 @@ public class Button {
 	private IntTuple currentColours = new IntTuple(NORMAL_BG_GRAY, NORMAL_FG_GRAY);
 
 	public void draw(PGraphics g, PVector rMousePos) {
-		Pvector scaledMousePos = new PVector(rMousePos.x / g.width, rMousePos.y / g.height);
+		PVector scaledMousePos = new PVector(rMousePos.x / g.width, rMousePos.y / g.height);
 		if (isHovered(scaledMousePos)) {
 			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, HOVERED_BG_GRAY, ANIM_LERP_COEFF),
 					(int) PApplet.lerp(currentColours.b, HOVERED_FG_GRAY, ANIM_LERP_COEFF));
