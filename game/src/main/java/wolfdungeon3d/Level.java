@@ -13,6 +13,9 @@ import com.google.common.base.Function;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PVector;
+import wolfdungeon3d.Level.BinaryNode;
+import wolfdungeon3d.Level.EntityBehaviour;
+import wolfdungeon3d.Level.Tile;
 
 public class Level {
 	private static final PVector MAX_ROOM_SIZE = new PVector(20, 20);
@@ -325,8 +328,8 @@ public class Level {
 			 */
 			behaviour.startPoint = room.pos;
 			behaviour.endPoint = PVector.add(room.pos, PVector.sub(room.size, new PVector(1, 1)));
-			behaviour.e = new Entity(PVector.add(behaviour.startPoint, new PVector(0, 0, 0.25f)),
-					new PVector(0.5f, 0.5f), spiritTex, Attributes.getRandomAttributes(floor, randomizer));
+			behaviour.e = new Entity(PVector.add(behaviour.startPoint, new PVector(1, 1, 0.25f)),
+					new PVector(0.5f, 0.5f, 0.5f), spiritTex, Attributes.getRandomAttributes(floor, randomizer));
 			behaviours.add(behaviour);
 		}
 	}
@@ -345,6 +348,24 @@ public class Level {
 			sb.append('\n');
 		}
 		return sb.toString();
+	}
+
+	public String toStringWithSpecials(List<IntTuple> specials) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < grid.length; i++) {
+			loop: for (int j = 0; j < grid[i].length; j++) {
+				for (IntTuple s : specials) {
+					if (s.a == j && s.b == i) {
+						sb.append("EE");
+						continue loop;
+					}
+				}
+				sb.append(Tile.getTile(grid[i][j]).print);
+			}
+			sb.append('\n');
+		}
+		return sb.toString();
+
 	}
 
 	//////////////////

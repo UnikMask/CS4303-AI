@@ -13,6 +13,11 @@ public class IntTuple {
 		return new IntTuple(a.a - b.a, a.b - b.b);
 	}
 
+	public static float awayBy(PVector pos, IntTuple target) {
+		PVector targetReal = new PVector(target.a, target.b);
+		return Math.abs(PVector.sub(pos, targetReal).mag());
+	}
+
 	@Override
 	public int hashCode() {
 		return Integer.hashCode(a) + Integer.hashCode(b) * 65535;
@@ -39,7 +44,16 @@ public class IntTuple {
 	}
 
 	public IntTuple(PVector vec) {
-		this.a = (int) vec.x;
-		this.b = (int) vec.y;
+		this(vec, false);
+	}
+
+	public IntTuple(PVector vec, boolean round) {
+		if (round) {
+			this.a = Math.round(vec.x);
+			this.b = Math.round(vec.y);
+		} else {
+			this.a = (int) vec.x;
+			this.b = (int) vec.y;
+		}
 	}
 }

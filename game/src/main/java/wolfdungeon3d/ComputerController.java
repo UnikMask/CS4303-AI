@@ -15,7 +15,8 @@ import wolfdungeon3d.Level.Tile;
 
 public class ComputerController implements EntityController {
 	private static final List<IntTuple> neighbours = Arrays.asList(new IntTuple(0, 1), new IntTuple(1, 0),
-			new IntTuple(0, -1), new IntTuple(-1, 0));
+			new IntTuple(0, -1), new IntTuple(-1, 0), new IntTuple(1, 1), new IntTuple(-1, 1), new IntTuple(-1, -1),
+			new IntTuple(1, -1));
 	private Entity e;
 	private Game game;
 	private PVector idleStart;
@@ -66,17 +67,25 @@ public class ComputerController implements EntityController {
 	}
 
 	public void update() {
-		/*
-		 * if (game.getState() == GameState.EXPLORE) { // Get next decision if
-		 * (!currentPath.isEmpty() && currentPath.get(0).equals(new
-		 * IntTuple(e.getPosition()))) { currentPath.remove(0); }
-		 *
-		 * if (e.isHostile()) { currentPath = getPath(new
-		 * IntTuple(game.getPlayer().getPosition()), wasHostile); wasHostile = true; }
-		 * else { wasHostile = false; if (chasingStart) { currentPath = getPath(new
-		 * IntTuple(idleEnd), false); } else { currentPath = getPath(new
-		 * IntTuple(idleStart), false); } } }
-		 */
+		if (game.getState() == GameState.EXPLORE) { // Get next decision
+			currentPath = getPath(new IntTuple(game.getPlayer().getPosition()), true);
+			while (!currentPath.isEmpty() && IntTuple.awayBy(e.getPosition(), currentPath.get(0)) <= Math.sqrt(2)) {
+				currentPath.remove(0);
+			}
+
+			/*
+			 * if (e.isHostile()) { currentPath = getPath(new
+			 * IntTuple(game.getPlayer().getPosition()), wasHostile); wasHostile = true; }
+			 * else { wasHostile = false; if (chasingStart) { currentPath = getPath(new
+			 * IntTuple(idleEnd), false); } else { currentPath = getPath(new
+			 * IntTuple(idleStart), false); } }
+			 */
+			if (!currentPath.isEmpty()) {
+				PVector dir = PVector.sub(new PVector(currentPath.get(0).a, currentPath.get(0).b), e.getPosition());
+				e.setRotation(dir.heading());
+				e.move(new PVector(-dir.mag(), 0));
+			}
+		}
 	}
 
 	public void getCombatTurn(Combat combat) {
@@ -93,7 +102,7 @@ public class ComputerController implements EntityController {
 	private ArrayList<IntTuple> getPath(IntTuple target, IntTuple start, HashMap<IntTuple, IntTuple> pathMap) {
 		ArrayDeque<IntTuple> path = new ArrayDeque<>(Arrays.asList(target));
 		IntTuple current = target;
-		while (current != start) {
+		while (!current.equals(start)) {
 			current = pathMap.get(current);
 			path.push(current);
 		}
@@ -103,16 +112,18 @@ public class ComputerController implements EntityController {
 	public ArrayList<IntTuple> getPath(IntTuple target, boolean keepPath) {
 		IntTuple start = new IntTuple(e.getPosition());
 		ArrayList<IntTuple> path = new ArrayList<>();
-		if (keepPath && currentPath != null) {
+		if (!currentPath.isEmpty() && keepPath) {
 			int nPos = 0;
 			int dist = Integer.MAX_VALUE;
 			for (int i = 0; i < currentPath.size(); i++) {
-				if (getManhattanDist(currentPath.get(i), target) < dist) {
+				int ndist = i + getManhattanDist(currentPath.get(i), target);
+				if (ndist < dist) {
 					nPos = i;
-					dist = getManhattanDist(currentPath.get(i), target);
+					dist = ndist;
 				}
 			}
-			path.addAll(currentPath.subList(0, nPos));
+			path.addAll(currentPath.subList(0, nPos + 1));
+			start = currentPath.get(nPos);
 		}
 
 		HashMap<IntTuple, Integer> g = new HashMap<>();
@@ -121,29 +132,33 @@ public class ComputerController implements EntityController {
 
 		PriorityQueue<IntTuple> q = new PriorityQueue<>(new Comparator<IntTuple>() {
 			public int compare(IntTuple o1, IntTuple o2) {
-				return (getG(o1, g) + getManhattanDist(o1, target) - getG(o2, g) - getManhattanDist(o2, target));
+				int res = (getG(o1, g) + getManhattanDist(o1, target) - getG(o2, g) - getManhattanDist(o2, target));
+				if (res == 0) {
+					return getManhattanDist(o1, target) - getManhattanDist(o2, target);
+				} else {
+					return res;
+				}
 			}
 		});
 		q.add(start);
 
-		for (int step = 0; !q.isEmpty() && step < 10000; step++) {
+		int step = 0;
+		for (int z = 0; !q.isEmpty() && step < 1000; step++) {
 			IntTuple next = q.poll();
 			if (next.equals(target)) {
-				System.out.println("Number of steps: " + step);
-				return getPath(target, start, lastNode);
+				path.addAll(getPath(target, start, lastNode));
+				return path;
 			}
 			for (IntTuple neighbour : neighbours) {
-				IntTuple newNode = IntTuple.add(neighbour, next);
+				IntTuple newNode = IntTuple.add(next, neighbour);
 				if (game.getLevel().getTile(newNode.a, newNode.b) == Tile.ROOM
 						&& getG(next, g) + 1 < getG(newNode, g)) {
 					lastNode.put(newNode, next);
-					g.put(newNode, getG(next, g) + 1);
+					g.put(newNode, getG(next, g) + (Math.abs(neighbour.a) + Math.abs(neighbour.b)));
 					q.add(newNode);
 				}
 			}
 		}
-
-		path.addAll(getPath(q.peek(), start, lastNode));
 		return path;
 	}
 
@@ -161,6 +176,7 @@ public class ComputerController implements EntityController {
 
 	public ComputerController(EntityBehaviour b, Game game) {
 		this.e = b.e;
+		this.currentPath = new ArrayList<>();
 		this.idleStart = b.startPoint;
 		this.idleEnd = b.endPoint;
 		this.game = game;

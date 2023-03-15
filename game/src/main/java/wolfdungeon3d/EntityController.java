@@ -4,6 +4,8 @@ import processing.core.PVector;
 
 public interface EntityController {
 
+	public Entity getEntity();
+
 	public void onKeyPressed(Character c);
 
 	public void onKeyHeld(Character c);

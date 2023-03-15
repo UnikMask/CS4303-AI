@@ -20,7 +20,6 @@ public class Game {
 	private static final PVector FLOOR_SIZE_INCREMENT = new PVector(2, 2);
 	private static final float DIR_L = 0.2f;
 	private static final float MAX_V = 3.0f;
-	private static final PVector ENTITY_AABB = new PVector(0.25f, 0.25f);
 
 	private PApplet applet;
 	private GameState state = GameState.LOADING;
@@ -68,9 +67,12 @@ public class Game {
 
 	public void setUp() {
 		lvl = Level.generate(getLevelSize(floor), applet, floor, new Date().getTime() + new Random(floor).nextInt());
-		entities = new HashSet<>(lvl.getEntities().stream().map((b) -> b.e).collect(Collectors.toSet()));
+		controllers = new HashSet<>(
+				lvl.getEntities().stream().map((b) -> new ComputerController(b, this)).collect(Collectors.toSet()));
+		entities = new HashSet<>(controllers.stream().map((c) -> c.getEntity()).collect(Collectors.toSet()));
 
-		player = new Entity(lvl.getStartPosition(), new PVector(0.5f, 0.5f), null, new Attributes(1, 1, 1, 1, 1, 1));
+		player = new Entity(lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
+				new Attributes(1, 1, 1, 1, 1, 1));
 		controller = new PlayerController(player, new InputSettings());
 		controllers.add(controller);
 		entities.add(player);
@@ -140,8 +142,8 @@ public class Game {
 	}
 
 	private void correctCollisions(Entity e) {
-		PVector minBounds = PVector.sub(e.getPosition(), ENTITY_AABB);
-		PVector maxBounds = PVector.add(e.getPosition(), ENTITY_AABB);
+		PVector minBounds = PVector.sub(e.getPosition(), new PVector(e.getSize().x / 2, e.getSize().z / 2));
+		PVector maxBounds = PVector.add(e.getPosition(), new PVector(e.getSize().x / 2, e.getSize().z / 2));
 
 		List<PVector> corners = Arrays.asList(minBounds, new PVector(minBounds.x, maxBounds.y), maxBounds,
 				new PVector(maxBounds.x, minBounds.y));

@@ -10,6 +10,10 @@ public class PlayerController implements EntityController {
 	InputSettings inputs;
 	HashSet<Command> movementInputs = new HashSet<>();
 
+	public Entity getEntity() {
+		return e;
+	}
+
 	public void onKeyPressed(Character c) {
 	}
 
