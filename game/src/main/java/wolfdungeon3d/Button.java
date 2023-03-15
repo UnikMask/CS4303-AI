@@ -8,10 +8,7 @@ import processing.core.PVector;
 
 public class Button {
 	// Constants
-	private static final int NORMAL_BG_GRAY = 32;
-	private static final int HOVERED_BG_GRAY = 200;
-	private static final int NORMAL_FG_GRAY = 255;
-	private static final int HOVERED_FG_GRAY = 28;
+	private static final ButtonStyle DEFAULT_STYLE = new ButtonStyle(200, 28, 32, 255, 0, 0);
 	private static final float ANIM_LERP_COEFF = 0.2f;
 
 	// Attributes
@@ -20,9 +17,26 @@ public class Button {
 	private PVector size;
 	private PVector position;
 	private EventCallback onClickCallback;
-	private IntTuple currentColours = new IntTuple(NORMAL_BG_GRAY, NORMAL_FG_GRAY);
+	private ButtonStyle style;
+	private IntTuple currentColours;
 
-	//
+	static class ButtonStyle {
+		int hoveredBgColor;
+		int hoveredFgColor;
+		int normalBgColor;
+		int normalFgColor;
+		int strokeSize;
+		int strokeColor;
+
+		ButtonStyle(int hbg, int hfg, int bg, int fg, int ss, int sc) {
+			hoveredBgColor = hbg;
+			hoveredFgColor = hfg;
+			normalBgColor = bg;
+			normalFgColor = fg;
+			strokeSize = ss;
+			strokeColor = sc;
+		}
+	}
 
 	/**
 	 * Draw the button on the given graphical context
@@ -32,11 +46,11 @@ public class Button {
 	 */
 	public void draw(PGraphics g, PVector rMousePos, PVector screenBounds) {
 		if (isHovered(scaleMousePosition(rMousePos, screenBounds))) {
-			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, HOVERED_BG_GRAY, ANIM_LERP_COEFF),
-					(int) PApplet.lerp(currentColours.b, HOVERED_FG_GRAY, ANIM_LERP_COEFF));
+			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, style.hoveredBgColor, ANIM_LERP_COEFF),
+					(int) PApplet.lerp(currentColours.b, style.hoveredFgColor, ANIM_LERP_COEFF));
 		} else {
-			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, NORMAL_BG_GRAY, ANIM_LERP_COEFF),
-					(int) PApplet.lerp(currentColours.b, NORMAL_FG_GRAY, ANIM_LERP_COEFF));
+			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, style.normalBgColor, ANIM_LERP_COEFF),
+					(int) PApplet.lerp(currentColours.b, style.normalFgColor, ANIM_LERP_COEFF));
 		}
 
 		// Draw button shape
@@ -98,5 +112,7 @@ public class Button {
 		this.size = size;
 		this.position = position;
 		onClickCallback = cb;
+		this.style = DEFAULT_STYLE;
+		this.currentColours = new IntTuple(style.normalBgColor, style.normalFgColor);
 	}
 }
