@@ -1,5 +1,6 @@
 package wolfdungeon3d;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,22 +16,18 @@ import processing.opengl.PShader;
 
 public class RaycastingRenderer {
 	private final static float MAX_SPRITE_DRAW_DISTANCE = 24.0f;
-	PApplet applet;
-	PShape canvas;
-	PGraphics depthg;
-	PShader raycastingShader;
-	PShader spriteShader;
+	private PApplet applet;
+	private PShape canvas;
+	private PGraphics depthg;
+	private PShader raycastingShader;
+	private PShader spriteShader;
+	private PShader onTopShader;
 
-	private void generateCanvas(PGraphics graphics) {
-		canvas = graphics.createShape();
-
-		canvas.beginShape();
-		canvas.vertex(0, 0, 0);
-		canvas.vertex(0, graphics.height, 0);
-		canvas.vertex(graphics.width, graphics.height, 0);
-		canvas.vertex(graphics.width, 0, 0);
-		canvas.endShape(PConstants.CLOSE);
-	}
+	// Message Display
+	private static final PVector MSG_POSITION = new PVector(0.025f, 0.925f);
+	private static final int INIT_FRAMES_MESSAGE = 120;
+	private ArrayDeque<String> messageQueue = new ArrayDeque<>();
+	private int framesUntilNextMessage = 0;
 
 	public void draw(PGraphics graphics, Game game, PVector dir, PVector plane) {
 		if (canvas == null) {
@@ -103,6 +100,52 @@ public class RaycastingRenderer {
 
 			graphics.shape(spriteShape);
 		}
+		graphics.resetShader();
+
+		// Draw messages
+		displayMessages(graphics);
+	}
+
+	public void addMessage(String msg) {
+		if (messageQueue.isEmpty()) {
+			framesUntilNextMessage = INIT_FRAMES_MESSAGE;
+		}
+		messageQueue.addLast(msg);
+	}
+
+	public void nextMessage() {
+		if (!messageQueue.isEmpty()) {
+			messageQueue.pollFirst();
+			framesUntilNextMessage = INIT_FRAMES_MESSAGE;
+		}
+	}
+
+	/////////////////////
+	// Private Methods //
+	/////////////////////
+
+	private void displayMessages(PGraphics g) {
+		if (messageQueue.isEmpty()) {
+			return;
+		}
+		framesUntilNextMessage--;
+		if (framesUntilNextMessage == 0) {
+			messageQueue.pollFirst();
+			framesUntilNextMessage = INIT_FRAMES_MESSAGE;
+			if (messageQueue.isEmpty()) {
+				return;
+			}
+		}
+		g.shader(onTopShader);
+		String msg = messageQueue.peekFirst();
+		g.pushStyle();
+		g.fill(g.color(255, ((float) framesUntilNextMessage / (float) INIT_FRAMES_MESSAGE) * 255));
+		g.textFont(Assets.getFont("FFFFORWA.TTF"));
+		g.textAlign(PConstants.LEFT, PConstants.CENTER);
+		g.textSize(g.height / 20);
+		g.text(msg, MSG_POSITION.x * g.width, MSG_POSITION.y * g.height, -0.01f);
+		g.popStyle();
+		g.resetShader();
 	}
 
 	private PVector rotateY(PVector v, float theta) {
@@ -110,10 +153,26 @@ public class RaycastingRenderer {
 				(float) (Math.cos(-theta) * v.z - Math.sin(-theta) * v.x));
 	}
 
+	private void generateCanvas(PGraphics graphics) {
+		canvas = graphics.createShape();
+		canvas.beginShape();
+		canvas.vertex(0, 0, 0);
+		canvas.vertex(0, graphics.height, 0);
+		canvas.vertex(graphics.width, graphics.height, 0);
+		canvas.vertex(graphics.width, 0, 0);
+		canvas.endShape(PConstants.CLOSE);
+	}
+
+	/**
+	 * Constructor for a raycasting renderer.
+	 *
+	 * @param applet The applet to attach the renderer to and load the shaders from.
+	 */
 	public RaycastingRenderer(PApplet applet) {
 		this.applet = applet;
 		// raycastingShader = applet.loadShader("raycaster.frag", "raycaster.vert");
 		raycastingShader = applet.loadShader("raycaster.frag");
 		spriteShader = applet.loadShader("sprite.frag");
+		onTopShader = applet.loadShader("onTop.frag");
 	}
 }

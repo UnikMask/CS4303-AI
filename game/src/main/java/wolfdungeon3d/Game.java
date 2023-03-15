@@ -86,6 +86,7 @@ public class Game {
 		controller = new PlayerController(player, new InputSettings());
 		controllers.add(controller);
 		entities.add(player);
+		renderer.addMessage("Welcome to floor " + floor + "!");
 	}
 
 	// Get the image of the game level as an appliable texture for the renderer.
@@ -290,7 +291,7 @@ public class Game {
 	public Game(PApplet applet, GLWindow nativew) {
 		this.applet = applet;
 		this.nativew = nativew;
-		setUp();
 		renderer = new RaycastingRenderer(applet);
+		setUp();
 	}
 }

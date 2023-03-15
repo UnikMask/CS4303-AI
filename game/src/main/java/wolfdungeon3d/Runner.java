@@ -14,7 +14,6 @@ import processing.core.PVector;
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
 	static private final PVector MAIN_CTX_POS = new PVector(0, 0);
-	static private final PVector HUD_CTX_POS = new PVector(0, 0.8f);
 
 	// State Handling
 	PGraphics mainGraphicsCtx;
