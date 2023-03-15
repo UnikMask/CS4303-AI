@@ -21,9 +21,14 @@ public class Button {
 	private EventCallback onClickCallback;
 	private IntTuple currentColours = new IntTuple(NORMAL_BG_GRAY, NORMAL_FG_GRAY);
 
-	public void draw(PGraphics g, PVector rMousePos) {
-		PVector scaledMousePos = new PVector(rMousePos.x / g.width, rMousePos.y / g.height);
-		if (isHovered(scaledMousePos)) {
+	/**
+	 * Draw the button on the given graphical context
+	 *
+	 * @param g         The graphical context to draw on.
+	 * @param rMousePos The real position of the mouse on the screen
+	 */
+	public void draw(PGraphics g, PVector rMousePos, PVector screenBounds) {
+		if (isHovered(scaleMousePosition(rMousePos, screenBounds))) {
 			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, HOVERED_BG_GRAY, ANIM_LERP_COEFF),
 					(int) PApplet.lerp(currentColours.b, HOVERED_FG_GRAY, ANIM_LERP_COEFF));
 		} else {
@@ -55,5 +60,31 @@ public class Button {
 	public boolean isHovered(PVector adaptedMousePosition) {
 		PVector dist = PVector.sub(adaptedMousePosition, position);
 		return dist.x > 0 && dist.x < size.x && dist.y > 0 && dist.y < size.y;
+	}
+
+	public void onClick(PVector rMousePos, PVector screenBounds) {
+		if (isHovered(scaleMousePosition(rMousePos, screenBounds))) {
+			onClickCallback.call();
+		}
+	}
+
+	private PVector scaleMousePosition(PVector rMousePos, PVector screenBounds) {
+		return new PVector(rMousePos.x / g.width, rMousePos.y / g.height);
+
+	}
+
+	/**
+	 * Constructor for a button
+	 *
+	 * @param text     The text inside the button.
+	 * @param size     The size of the button.
+	 * @param position The position of the button on the graphical context.
+	 * @param cb       The callback run on click.
+	 */
+	public Button(String text, PVector size, PVector position, EventCallback cb) {
+		this.text = text;
+		this.size = size;
+		this.position = position;
+		onClickCallback = cb;
 	}
 }
