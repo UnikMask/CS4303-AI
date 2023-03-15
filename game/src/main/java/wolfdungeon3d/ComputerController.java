@@ -15,8 +15,8 @@ import wolfdungeon3d.Level.Tile;
 
 public class ComputerController implements EntityController {
 	private static final List<IntTuple> neighbours = Arrays.asList(new IntTuple(0, 1), new IntTuple(1, 0),
-			new IntTuple(0, -1), new IntTuple(-1, 0), new IntTuple(1, 1), new IntTuple(-1, 1), new IntTuple(-1, -1),
-			new IntTuple(1, -1));
+			new IntTuple(0, -1), new IntTuple(-1, 0), new IntTuple(1, 1), new IntTuple(1, -1), new IntTuple(-1, -1),
+			new IntTuple(-1, 1));
 	private Entity e;
 	private Game game;
 	private PVector idleStart;
@@ -69,7 +69,7 @@ public class ComputerController implements EntityController {
 	public void update() {
 		if (game.getState() == GameState.EXPLORE) { // Get next decision
 			currentPath = getPath(new IntTuple(game.getPlayer().getPosition()), true);
-			while (!currentPath.isEmpty() && IntTuple.awayBy(e.getPosition(), currentPath.get(0)) <= Math.sqrt(2)) {
+			while (!currentPath.isEmpty() && IntTuple.awayBy(e.getPosition(), currentPath.get(0)) <= 0.8f) {
 				currentPath.remove(0);
 			}
 
@@ -81,7 +81,8 @@ public class ComputerController implements EntityController {
 			 * IntTuple(idleStart), false); } }
 			 */
 			if (!currentPath.isEmpty()) {
-				PVector dir = PVector.sub(new PVector(currentPath.get(0).a, currentPath.get(0).b), e.getPosition());
+				PVector dir = PVector.sub(new PVector(currentPath.get(0).a + 0.5f, currentPath.get(0).b + 0.5f),
+						e.getPosition());
 				e.setRotation(dir.heading());
 				e.move(new PVector(-dir.mag(), 0));
 			}

@@ -121,8 +121,9 @@ public class Entity implements Sprite {
 	}
 
 	public void move(PVector dir) {
-		dir.rotate(direction);
-		velocity = PVector.add(velocity, dir);
+		PVector ndir = dir.copy().normalize();
+		ndir.rotate(direction);
+		velocity = PVector.add(velocity, ndir);
 	}
 
 	//////////////////

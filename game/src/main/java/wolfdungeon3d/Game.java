@@ -176,7 +176,7 @@ public class Game {
 			if (e.getVelocity().mag() > MAX_V) {
 				e.setVelocity(PVector.mult(e.getVelocity().normalize(), MAX_V));
 			}
-			e.setVelocity(PVector.mult(e.getVelocity(), 0.8f));
+			e.setVelocity(PVector.mult(e.getVelocity(), 1 - (2.0f * (float) -deltaT)));
 			e.setPosition(PVector.add(e.getPosition(), PVector.mult(e.getVelocity(), (float) deltaT)));
 			correctCollisions(e);
 		}
