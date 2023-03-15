@@ -14,12 +14,15 @@ public class Button {
 	private static final int HOVERED_FG_GRAY = 28;
 	private static final float ANIM_LERP_COEFF = 0.2f;
 
+	// Attributes
 	private PShape shape;
 	private String text;
 	private PVector size;
 	private PVector position;
 	private EventCallback onClickCallback;
 	private IntTuple currentColours = new IntTuple(NORMAL_BG_GRAY, NORMAL_FG_GRAY);
+
+	//
 
 	/**
 	 * Draw the button on the given graphical context
@@ -56,12 +59,21 @@ public class Button {
 
 	/**
 	 * Check if a button is being hovered.
+	 *
+	 * @param adaptedMousePosition the position of the mouse scaled to the screen.
 	 */
 	public boolean isHovered(PVector adaptedMousePosition) {
 		PVector dist = PVector.sub(adaptedMousePosition, position);
 		return dist.x > 0 && dist.x < size.x && dist.y > 0 && dist.y < size.y;
 	}
 
+	/**
+	 * On click event of a button.
+	 *
+	 * @param rMousePos    Real mouse position on screen - used to calculate if a
+	 *                     button is hovered.
+	 * @param screenBounds The bounds of the screen for mouse position scaling.
+	 */
 	public void onClick(PVector rMousePos, PVector screenBounds) {
 		if (isHovered(scaleMousePosition(rMousePos, screenBounds))) {
 			onClickCallback.call();
@@ -69,7 +81,7 @@ public class Button {
 	}
 
 	private PVector scaleMousePosition(PVector rMousePos, PVector screenBounds) {
-		return new PVector(rMousePos.x / g.width, rMousePos.y / g.height);
+		return new PVector(rMousePos.x / screenBounds.x, rMousePos.y / screenBounds.y);
 
 	}
 
