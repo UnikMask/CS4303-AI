@@ -35,6 +35,7 @@ public class Attributes {
 			case 5:
 				intellect++;
 			}
+			floor--;
 		}
 	}
 

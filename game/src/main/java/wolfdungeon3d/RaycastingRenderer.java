@@ -29,7 +29,10 @@ public class RaycastingRenderer {
 	private ArrayDeque<String> messageQueue = new ArrayDeque<>();
 	private int framesUntilNextMessage = 0;
 
-	public void draw(PGraphics graphics, Game game, PVector dir, PVector plane) {
+	// Interaction display
+	private static final String INTERACT_MSG = "Press <E> to ";
+
+	public void draw(PGraphics graphics, Game game, PVector dir, PVector plane, String action) {
 		if (canvas == null) {
 			generateCanvas(graphics);
 		}
@@ -49,6 +52,7 @@ public class RaycastingRenderer {
 		raycastingShader.set("tile0", tileTextures.get(0));
 		raycastingShader.set("tile1", tileTextures.get(1));
 		raycastingShader.set("tile2", tileTextures.get(2));
+		raycastingShader.set("tile3", tileTextures.get(3));
 		raycastingShader.set("renderDistance", MAX_SPRITE_DRAW_DISTANCE);
 		raycastingShader.set("screenSize", (float) graphics.width, (float) graphics.height);
 
@@ -104,6 +108,9 @@ public class RaycastingRenderer {
 
 		// Draw messages
 		displayMessages(graphics);
+		if (action != null) {
+			displayInteractionMessage(graphics, action);
+		}
 	}
 
 	public void addMessage(String msg) {
@@ -144,6 +151,20 @@ public class RaycastingRenderer {
 		g.textAlign(PConstants.LEFT, PConstants.CENTER);
 		g.textSize(g.height / 20);
 		g.text(msg, MSG_POSITION.x * g.width, MSG_POSITION.y * g.height, -0.01f);
+		g.popStyle();
+		g.resetShader();
+	}
+
+	private void displayInteractionMessage(PGraphics g, String action) {
+		String msg = INTERACT_MSG + action;
+
+		g.shader(onTopShader);
+		g.pushStyle();
+		g.fill(0xffffffff);
+		g.textFont(Assets.getFont("FFFFORWA.TTF"));
+		g.textAlign(PConstants.CENTER, PConstants.CENTER);
+		g.textSize(g.height / 20);
+		g.text(msg, 0.5f * g.width, 0.5f * g.height);
 		g.popStyle();
 		g.resetShader();
 	}

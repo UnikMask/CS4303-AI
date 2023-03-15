@@ -12,6 +12,7 @@ uniform sampler2D texture;
 uniform sampler2D tile0;
 uniform sampler2D tile1;
 uniform sampler2D tile2;
+uniform sampler2D tile3;
 
 void main() {
 	vec3 coords = vec3(gl_FragCoord.xyz / vec3(screenSize.x, screenSize.y, 1)) * 2 - vec3(1, 1, 1);
@@ -66,7 +67,7 @@ void main() {
 			hit = true;
 		}
 		tile = texelFetch(texture, ivec2(map.x, map.y), 0);
-		if (tile.rgb != vec3(1,1,1)) { // Hit something that isn't space.
+		if (tile.rgb == vec3(0,0,0)) { // Hit something that isn't space.
 			hit = true;
 		}
 	}
@@ -91,18 +92,13 @@ void main() {
 		} else {
 			gl_FragColor = tile;
 		}
+	} else if (tile.rgb == vec3(1, 0, 0)) {
+		gl_FragColor = texture2D(tile3, vec2(texPos.x, 1 - texPos.y));
 	} else if (side == 2) {
 		gl_FragColor = texture2D(tile1, vec2(texPos.x, 1 - texPos.y));
 	} else {
 		gl_FragColor = texture2D(tile2, vec2(texPos.x, 1 - texPos.y));
 	}
-	/*if (side == 0) {
-		gl_FragColor = vec4(0, texPos.x,  1 - texPos.y, 1);
-	} else if (side == 1) {
-		gl_FragColor = vec4(texPos.x, 0, 1 - texPos.y, 1);
-	} else {
-		gl_FragColor = vec4(texPos.x, 1 - texPos.y, 0, 1);
-	}*/
 
 	vec4 light = vec4(1, 1, 0.6, 1);
 	float intensity = ((24.0 - dist) / 24.0) * dot(normalize(dir), ray);

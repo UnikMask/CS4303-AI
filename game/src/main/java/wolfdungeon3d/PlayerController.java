@@ -9,12 +9,17 @@ public class PlayerController implements EntityController {
 	Entity e;
 	InputSettings inputs;
 	HashSet<Command> movementInputs = new HashSet<>();
+	Game game;
 
 	public Entity getEntity() {
 		return e;
 	}
 
 	public void onKeyPressed(Character c) {
+		Command comm = inputs.getCommand(c);
+		if (comm == Command.INTERACT) {
+			game.goToNextFloor();
+		}
 	}
 
 	public void onKeyHeld(Character c) {
@@ -57,7 +62,8 @@ public class PlayerController implements EntityController {
 	// Constructor //
 	/////////////////
 
-	public PlayerController(Entity e, InputSettings inputs) {
+	public PlayerController(Entity e, Game game, InputSettings inputs) {
+		this.game = game;
 		this.inputs = inputs;
 		this.e = e;
 	}

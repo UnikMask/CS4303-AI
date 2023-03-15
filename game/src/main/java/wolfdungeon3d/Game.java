@@ -32,6 +32,7 @@ public class Game {
 	private Entity player;
 	private HashSet<Entity> entities = new HashSet<>();
 	private HashSet<EntityController> controllers = new HashSet<>();
+	private String action = null;
 
 	private PlayerController controller;
 	private RaycastingRenderer renderer;
@@ -76,17 +77,27 @@ public class Game {
 	////////////
 
 	public void setUp() {
+		System.out.println("Generating level...");
 		lvl = Level.generate(getLevelSize(floor), applet, floor, new Date().getTime() + new Random(floor).nextInt());
+		System.out.println("Collecting controllers...");
 		controllers = new HashSet<>(
 				lvl.getEntities().stream().map((b) -> new ComputerController(b, this)).collect(Collectors.toSet()));
 		entities = new HashSet<>(controllers.stream().map((c) -> c.getEntity()).collect(Collectors.toSet()));
 
-		player = new Entity(lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
-				new Attributes(1, 1, 1, 1, 1, 1));
-		controller = new PlayerController(player, new InputSettings());
+		System.out.println("Reloading player...");
+		if (player == null) {
+			player = new Entity(lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
+					new Attributes(1, 1, 1, 1, 1, 1));
+			controller = new PlayerController(player, this, new InputSettings());
+		} else {
+			player.setPosition(lvl.getStartPosition());
+			player.setVelocity(new PVector(0, 0));
+			player.setRotation(0);
+		}
 		controllers.add(controller);
 		entities.add(player);
 		renderer.addMessage("Welcome to floor " + floor + "!");
+		System.out.println("New level loaded!");
 	}
 
 	// Get the image of the game level as an appliable texture for the renderer.
@@ -106,13 +117,31 @@ public class Game {
 		lastFrameTime = new Date().getTime();
 
 		if (state == GameState.LOADING && lvl == null) {
+			System.out.println("Reload level!");
 			setUp();
 		} else if (state == GameState.LOADING && lvl != null) {
 			state = GameState.EXPLORE;
 		} else if (state == GameState.EXPLORE) {
 			updateControllers(deltaT);
+			IntTuple playerPosition = new IntTuple(player.getPosition());
+			if (lvl.getTile(playerPosition.a, playerPosition.b) == Tile.END) {
+				action = "go to the next floor.";
+			} else {
+				action = null;
+			}
 		}
 		confineMouseMovement();
+	}
+
+	public void goToNextFloor() {
+		if (state == GameState.EXPLORE) {
+			IntTuple playerPos = new IntTuple(player.getPosition());
+			if (lvl.getTile(playerPos.a, playerPos.b) == Tile.END) {
+				floor += 1;
+				state = GameState.LOADING;
+				lvl = null;
+			}
+		}
 	}
 
 	// Update controllers and entity positions based on time passed..
@@ -167,7 +196,7 @@ public class Game {
 			IntTuple cornerTilePos = new IntTuple(corners.get(i));
 
 			// Collision happened on corner
-			if (lvl.getTile(cornerTilePos.a, cornerTilePos.b) != Tile.ROOM) {
+			if (lvl.getTile(cornerTilePos.a, cornerTilePos.b) == Tile.WALL) {
 				PVector nx = Math.abs(normals.get(i).x) > 0.1f ? normals.get(i) : normals.get((i + 1) % corners.size());
 				PVector ny = Math.abs(normals.get(i).y) > 0.1f ? normals.get(i) : normals.get((i + 1) % corners.size());
 
@@ -182,7 +211,7 @@ public class Game {
 				while (!s.isEmpty() && !resolved) {
 					PVector n = s.pop();
 					IntTuple nextTilePos = IntTuple.add(cornerTilePos, new IntTuple(n));
-					if (lvl.getTile(nextTilePos.a, nextTilePos.b) == Tile.ROOM) {
+					if (lvl.getTile(nextTilePos.a, nextTilePos.b) != Tile.WALL) {
 						float j = PVector.dot(n, e.getVelocity());
 						e.setVelocity(PVector.add(e.getVelocity(), PVector.mult(n, -(j + 1))));
 						resolved = true;
@@ -239,7 +268,7 @@ public class Game {
 			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
 			PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
 			if (plane != null) {
-				renderer.draw(main, this, dir, plane);
+				renderer.draw(main, this, dir, plane, action);
 			}
 		}
 	}

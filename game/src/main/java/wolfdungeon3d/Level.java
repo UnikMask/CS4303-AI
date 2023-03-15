@@ -20,14 +20,14 @@ public class Level {
 	private static final PVector MIN_DIV_SIZE = new PVector(10, 10);
 	private static final String ENEMY_SPRITE = "sphere.png";
 	private PVector size;
-	private List<String> textures = Arrays.asList("wall.png", "floor.png", "ceiling.jpg");
+	private List<String> textures = Arrays.asList("wall.png", "floor.png", "ceiling.jpg", "bonewall.png");
 	private int[][] grid;
 	private PVector startPosition;
 	private List<EntityBehaviour> behaviours;
 
 	// Enum for tiles - maps tile to number.
 	enum Tile {
-		WALL(0, 0, "██"), ROOM(1, 0xffffffff, "  "), CENTER(2, 0xff00ff00, "CC");
+		WALL(0, 0, "██"), ROOM(1, 0xffffffff, "  "), CENTER(2, 0xff00ff00, "CC"), END(3, 0xffff0000, "FF");
 
 		int num;
 		int color;
@@ -40,6 +40,8 @@ public class Level {
 				return ROOM;
 			} else if (n == 2) {
 				return CENTER;
+			} else if (n == 3) {
+				return END;
 			}
 			return WALL;
 		}
@@ -141,13 +143,24 @@ public class Level {
 
 		Random rGenRandom = new Random(seed);
 
+		// Generate dungeon using BSP
+		System.out.println("Generating rooms...");
 		BinaryNode root = ret.generatePartitions(rGenRandom, size);
 		ArrayList<Room> rooms = ret.generateRoomsFromPartition(root, rGenRandom);
 		ret.generateCorridors(root, rGenRandom);
 
+		// Get a starting room and a player
+		System.out.println("Generating starting room...");
 		Room startingRoom = rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size());
 		ret.startPosition = PVector.add(startingRoom.pos, new PVector(1.5f, 1.5f, 0.35f));
+		System.out.println("Generating entities...");
 		ret.generateEntities(rGenRandom, floor, rooms, startingRoom);
+
+		// Get and ending room
+		Room endRoom = rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size());
+		IntTuple endLocation = IntTuple.add(new IntTuple(endRoom.pos), new IntTuple(
+				rGenRandom.nextInt(0, (int) endRoom.size.x - 1), rGenRandom.nextInt(0, (int) endRoom.size.y - 1)));
+		ret.grid[endLocation.b][endLocation.a] = Tile.END.num;
 		return ret;
 	}
 

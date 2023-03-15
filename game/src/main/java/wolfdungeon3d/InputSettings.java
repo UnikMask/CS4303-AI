@@ -7,11 +7,11 @@ import com.google.common.collect.Maps;
 
 public class InputSettings {
 	private HashMap<Character, Command> charCommandMap = Maps.newHashMap(ImmutableMap.of('w', Command.FORWARD, 's',
-			Command.BACKWARD, 'a', Command.LEFT, 'd', Command.RIGHT, 'p', Command.PAUSE));
+			Command.BACKWARD, 'a', Command.LEFT, 'd', Command.RIGHT, 'p', Command.PAUSE, 'e', Command.INTERACT));
 	private float mouseSensitivity = 3.0f;
 
 	enum Command {
-		FORWARD, BACKWARD, LEFT, RIGHT, PAUSE, NONE
+		FORWARD, BACKWARD, LEFT, RIGHT, PAUSE, INTERACT, NONE
 	}
 
 	public float getMouseSensitivity() {
