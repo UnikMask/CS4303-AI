@@ -15,9 +15,13 @@ public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
 	static private final PVector MAIN_CTX_POS = new PVector(0, 0);
 
+	// State Handling
 	PGraphics mainGraphicsCtx;
 	Game game;
-	RunnerState state = RunnerState.GAME;
+	RunnerState state = RunnerState.MENU;
+	MainMenu mainMenu;
+
+	// Input Handling
 	HashSet<Character> heldKeys = new HashSet<>();
 	PVector mouseMovement = new PVector();
 	PVector lastMousePosition = new PVector();
@@ -26,15 +30,30 @@ public class Runner extends PApplet {
 		MENU, GAME, HELP, GAME_PAUSE
 	}
 
+	// State Handling //
+	public void setState(RunnerState state) {
+		this.state = state;
+	}
+
+	public RunnerState getState() {
+		return state;
+	}
+
 	// Main update loop
 	public void update() {
-		if (state == RunnerState.GAME && game == null) {
-			game = new Game(this, (GLWindow) surface.getNative());
-		} else if (state == RunnerState.GAME && game != null) {
-			for (Character k : heldKeys) {
-				game.keyHeld(k);
+		switch (state) {
+		case GAME:
+			if (game == null) {
+				game = new Game(this, (GLWindow) surface.getNative());
+			} else {
+				for (Character k : heldKeys) {
+					game.keyHeld(k);
+				}
+				game.update();
 			}
-			game.update();
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -60,6 +79,14 @@ public class Runner extends PApplet {
 		}
 	}
 
+	public void mouseClicked() {
+		switch (state) {
+		case MENU:
+			mainMenu.handleOnClick(new PVector(mouseX, mouseY), new PVector(width, height));
+		default:
+		}
+	}
+
 	///////////////////////
 	// PApplet Functions //
 	///////////////////////
@@ -69,6 +96,7 @@ public class Runner extends PApplet {
 		mainGraphicsCtx = createGraphics((int) ((float) width * MAIN_CTX_PERCENT.x),
 				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P3D);
 		Assets.createInstance(this);
+		mainMenu = new MainMenu(this);
 	}
 
 	public void settings() {
@@ -79,14 +107,23 @@ public class Runner extends PApplet {
 	public void draw() {
 		update();
 		background(128);
-		mainGraphicsCtx.colorMode(PGraphics.ARGB);
-		mainGraphicsCtx.beginDraw();
-		mainGraphicsCtx.blendMode(PGraphics.BLEND);
-		if (state == RunnerState.GAME && game != null) {
-			game.draw(mainGraphicsCtx);
+		switch (state) {
+		case GAME:
+			if (game != null) {
+				mainGraphicsCtx.colorMode(PGraphics.ARGB);
+				mainGraphicsCtx.beginDraw();
+				mainGraphicsCtx.blendMode(PGraphics.BLEND);
+				game.draw(mainGraphicsCtx);
+				mainGraphicsCtx.endDraw();
+				image(mainGraphicsCtx, MAIN_CTX_POS.x, MAIN_CTX_POS.y);
+			}
+			break;
+		case MENU:
+			mainMenu.draw(this, new PVector(mouseX, mouseY));
+			break;
+		default:
+			break;
 		}
-		mainGraphicsCtx.endDraw();
-		image(mainGraphicsCtx, MAIN_CTX_POS.x, MAIN_CTX_POS.y);
 	}
 
 	public static void main(String[] args) {

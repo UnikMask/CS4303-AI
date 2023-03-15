@@ -8,7 +8,7 @@ import processing.core.PVector;
 
 public class Button {
 	// Constants
-	private static final ButtonStyle DEFAULT_STYLE = new ButtonStyle(200, 28, 32, 255, 0, 0);
+	private static final ButtonStyle DEFAULT_STYLE = new ButtonStyle(0xc8, 0x1c, 0x20, 0xff, 0x00, 0x00);
 	private static final float ANIM_LERP_COEFF = 0.2f;
 
 	// Attributes
@@ -58,7 +58,10 @@ public class Button {
 			shape = g.createShape(PConstants.RECT, 0, 0, size.x * g.width, size.y * g.height);
 		}
 		g.pushStyle();
-		g.fill(currentColours.a);
+		if (style.strokeSize == 0) {
+			g.noStroke();
+		}
+		shape.setFill(g.color(currentColours.a));
 		g.shape(shape, position.x * g.width, position.y * g.height);
 		g.popStyle();
 
@@ -67,7 +70,9 @@ public class Button {
 		g.pushStyle();
 		g.fill(g.color(currentColours.b));
 		g.textAlign(PConstants.CENTER, PConstants.CENTER);
-		g.text(text, (position.x + size.x / 2) * g.width, -textSize / 4 + (position.y + size.y / 2) * g.height);
+		g.textFont(Assets.getFont("FFFFORWA.TTF"));
+		g.textSize(textSize);
+		g.text(text, (position.x + size.x / 2) * g.width, (position.y + size.y / 2) * g.height);
 		g.popStyle();
 	}
 
@@ -108,11 +113,24 @@ public class Button {
 	 * @param cb       The callback run on click.
 	 */
 	public Button(String text, PVector size, PVector position, EventCallback cb) {
+		this(text, size, position, cb, DEFAULT_STYLE);
+	}
+
+	/**
+	 * Constructor for a button
+	 *
+	 * @param text     The text inside the button.
+	 * @param size     The size of the button.
+	 * @param position The position of the button on the graphical context.
+	 * @param cb       The callback run on click.
+	 * @param bs       The button style to use.
+	 */
+	public Button(String text, PVector size, PVector position, EventCallback cb, ButtonStyle bs) {
 		this.text = text;
 		this.size = size;
 		this.position = position;
 		onClickCallback = cb;
-		this.style = DEFAULT_STYLE;
+		this.style = bs;
 		this.currentColours = new IntTuple(style.normalBgColor, style.normalFgColor);
 	}
 }

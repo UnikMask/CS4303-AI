@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import processing.core.PApplet;
+import processing.core.PFont;
 import processing.core.PImage;
 
 public class Assets {
@@ -19,6 +20,10 @@ public class Assets {
 	// Sprites
 	private static final List<String> spriteSrcs = Arrays.asList("sphere.png");
 	public HashMap<String, PImage> spriteMap;
+
+	// Fonts
+	private static final List<String> fontSrces = Arrays.asList("FFFFORWA.TTF");
+	public HashMap<String, PFont> fontMap;
 
 	public static void createInstance(PApplet applet) {
 		instance = new Assets(applet);
@@ -40,14 +45,26 @@ public class Assets {
 		}
 	}
 
+	public static PFont getFont(String fp) {
+		if (instance.fontMap.containsKey(fp)) {
+			return instance.fontMap.get(fp);
+		} else {
+			return null;
+		}
+	}
+
 	public Assets(PApplet applet) {
 		texMap = new HashMap<>();
 		spriteMap = new HashMap<>();
+		fontMap = new HashMap<>();
 		for (String src : textureSrcs) {
 			texMap.put(src, applet.loadImage(src));
 		}
 		for (String src : spriteSrcs) {
 			spriteMap.put(src, applet.loadImage(src));
+		}
+		for (String src : fontSrces) {
+			fontMap.put(src, applet.createFont(src, 128));
 		}
 	}
 }
