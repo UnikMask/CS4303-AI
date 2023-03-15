@@ -13,9 +13,6 @@ import com.google.common.base.Function;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PVector;
-import wolfdungeon3d.Level.BinaryNode;
-import wolfdungeon3d.Level.EntityBehaviour;
-import wolfdungeon3d.Level.Tile;
 
 public class Level {
 	private static final PVector MAX_ROOM_SIZE = new PVector(20, 20);

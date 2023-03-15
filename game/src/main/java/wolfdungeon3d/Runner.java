@@ -10,7 +10,6 @@ import com.jogamp.newt.opengl.GLWindow;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
-import wolfdungeon3d.Game.GameState;
 
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
@@ -24,40 +23,18 @@ public class Runner extends PApplet {
 	PVector lastMousePosition = new PVector();
 
 	static enum RunnerState {
-		MENU, GAME
+		MENU, GAME, HELP, GAME_PAUSE
 	}
 
 	// Main update loop
 	public void update() {
 		if (state == RunnerState.GAME && game == null) {
-			game = new Game(this);
+			game = new Game(this, (GLWindow) surface.getNative());
 		} else if (state == RunnerState.GAME && game != null) {
 			for (Character k : heldKeys) {
 				game.keyHeld(k);
 			}
 			game.update();
-		}
-		if (state == RunnerState.GAME && game != null && game.getState() == GameState.EXPLORE) {
-			if (!((GLWindow) surface.getNative()).isPointerConfined()) {
-				((GLWindow) surface.getNative()).confinePointer(true);
-				((GLWindow) surface.getNative()).setPointerVisible(false);
-			}
-			PVector currentMousePosition = new PVector(mouseX, mouseY);
-			if (mouseX != width / 2 || mouseY != height / 2) {
-				((GLWindow) surface.getNative()).warpPointer(width / 2, height / 2);
-				PVector mvt = PVector.sub(currentMousePosition, new PVector(width / 2, height / 2));
-				mvt.x /= width;
-				mvt.y /= height;
-				mouseMovement = PVector.lerp(mouseMovement, mvt, 0.3f);
-			}
-			game.mouseMoved(mouseMovement);
-			mouseMovement = PVector.lerp(mouseMovement, new PVector(), 0.3f);
-			lastMousePosition = currentMousePosition;
-		} else {
-			if (((GLWindow) surface.getNative()).isPointerConfined()) {
-				((GLWindow) surface.getNative()).confinePointer(false);
-				((GLWindow) surface.getNative()).setPointerVisible(true);
-			}
 		}
 	}
 
