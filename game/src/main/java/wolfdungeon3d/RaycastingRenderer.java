@@ -2,6 +2,8 @@ package wolfdungeon3d;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import processing.core.PApplet;
 import processing.core.PConstants;
@@ -10,7 +12,6 @@ import processing.core.PImage;
 import processing.core.PShape;
 import processing.core.PVector;
 import processing.opengl.PShader;
-import wolfdungeon3d.Level.Tile;
 
 public class RaycastingRenderer {
 	private final static float MAX_SPRITE_DRAW_DISTANCE = 24.0f;
@@ -19,7 +20,6 @@ public class RaycastingRenderer {
 	PGraphics depthg;
 	PShader raycastingShader;
 	PShader spriteShader;
-	PImage[] tileTextures;
 
 	private void generateCanvas(PGraphics graphics) {
 		canvas = graphics.createShape();
@@ -36,6 +36,8 @@ public class RaycastingRenderer {
 		if (canvas == null) {
 			generateCanvas(graphics);
 		}
+		List<PImage> tileTextures = game.getLevel().getLevelTextures().stream().map((s) -> Assets.getTex(s))
+				.collect(Collectors.toList());
 
 		// Draw depth buffer
 		if (depthg == null) {
@@ -47,9 +49,9 @@ public class RaycastingRenderer {
 		raycastingShader.set("pos", pos.x, pos.y, pos.z);
 		raycastingShader.set("dir", dir.x, dir.y, 0);
 		raycastingShader.set("plane", plane.x, plane.y, plane.z);
-		raycastingShader.set("tile0", tileTextures[0]);
-		raycastingShader.set("tile1", tileTextures[1]);
-		raycastingShader.set("tile2", tileTextures[2]);
+		raycastingShader.set("tile0", tileTextures.get(0));
+		raycastingShader.set("tile1", tileTextures.get(1));
+		raycastingShader.set("tile2", tileTextures.get(2));
 		raycastingShader.set("renderDistance", MAX_SPRITE_DRAW_DISTANCE);
 		raycastingShader.set("screenSize", (float) graphics.width, (float) graphics.height);
 
@@ -108,14 +110,10 @@ public class RaycastingRenderer {
 				(float) (Math.cos(-theta) * v.z - Math.sin(-theta) * v.x));
 	}
 
-	public RaycastingRenderer(PApplet applet, Level level) {
+	public RaycastingRenderer(PApplet applet) {
 		this.applet = applet;
 		// raycastingShader = applet.loadShader("raycaster.frag", "raycaster.vert");
 		raycastingShader = applet.loadShader("raycaster.frag");
 		spriteShader = applet.loadShader("sprite.frag");
-		tileTextures = new PImage[3];
-		tileTextures[0] = applet.loadImage(Tile.WALL.tex);
-		tileTextures[1] = applet.loadImage(Tile.ROOM.tex);
-		tileTextures[2] = applet.loadImage(Tile.CENTER.tex);
 	}
 }

@@ -91,7 +91,7 @@ public class Runner extends PApplet {
 		frameRate(60);
 		mainGraphicsCtx = createGraphics((int) ((float) width * MAIN_CTX_PERCENT.x),
 				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P3D);
-
+		Assets.createInstance(this);
 	}
 
 	public void settings() {

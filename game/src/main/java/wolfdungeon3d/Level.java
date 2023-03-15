@@ -21,19 +21,18 @@ public class Level {
 	private static final PVector MAX_ROOM_SIZE = new PVector(20, 20);
 	private static final PVector MIN_ROOM_SIZE = new PVector(5, 5);
 	private static final PVector MIN_DIV_SIZE = new PVector(10, 10);
-	private final PImage spiritTex;
+	private static final String ENEMY_SPRITE = "sphere.png";
 	private PVector size;
+	private List<String> textures = Arrays.asList("wall.png", "floor.png", "ceiling.jpg");
 	private int[][] grid;
 	private PVector startPosition;
 	private List<EntityBehaviour> behaviours;
 
 	// Enum for tiles - maps tile to number.
 	enum Tile {
-		WALL(0, "wall.png", 0, "██"), ROOM(1, "floor.png", 0xffffffff, "  "),
-		CENTER(2, "ceiling.jpg", 0xff00ff00, "CC");
+		WALL(0, 0, "██"), ROOM(1, 0xffffffff, "  "), CENTER(2, 0xff00ff00, "CC");
 
 		int num;
-		String tex;
 		int color;
 		String print;
 
@@ -48,9 +47,8 @@ public class Level {
 			return WALL;
 		}
 
-		Tile(int num, String tex, int color, String print) {
+		Tile(int num, int color, String print) {
 			this.num = num;
-			this.tex = tex;
 			this.color = color;
 			this.print = print;
 		}
@@ -90,6 +88,10 @@ public class Level {
 
 	public List<EntityBehaviour> getEntities() {
 		return behaviours;
+	}
+
+	public List<String> getLevelTextures() {
+		return textures;
 	}
 
 	//////////////////////
@@ -329,7 +331,8 @@ public class Level {
 			behaviour.startPoint = room.pos;
 			behaviour.endPoint = PVector.add(room.pos, PVector.sub(room.size, new PVector(1, 1)));
 			behaviour.e = new Entity(PVector.add(behaviour.startPoint, new PVector(1, 1, 0.25f)),
-					new PVector(0.5f, 0.5f, 0.5f), spiritTex, Attributes.getRandomAttributes(floor, randomizer));
+					new PVector(0.5f, 0.5f, 0.5f), Assets.getSprite(ENEMY_SPRITE),
+					Attributes.getRandomAttributes(floor, randomizer));
 			behaviours.add(behaviour);
 		}
 	}
@@ -374,7 +377,6 @@ public class Level {
 
 	public Level(PVector size, PApplet applet) {
 		this.size = size;
-		this.spiritTex = applet.loadImage("sphere.png");
 		grid = new int[Math.round(size.y)][Math.round(size.x)];
 	}
 }
