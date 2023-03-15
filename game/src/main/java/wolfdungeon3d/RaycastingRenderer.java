@@ -13,6 +13,7 @@ import processing.core.PImage;
 import processing.core.PShape;
 import processing.core.PVector;
 import processing.opengl.PShader;
+import wolfdungeon3d.Game.GameState;
 
 public class RaycastingRenderer {
 	private final static float MAX_SPRITE_DRAW_DISTANCE = 24.0f;
@@ -68,7 +69,8 @@ public class RaycastingRenderer {
 		// Draw entities
 		graphics.shader(spriteShader);
 		spriteShader.set("renderDistance", MAX_SPRITE_DRAW_DISTANCE);
-		for (Sprite s : game.getSprites()) {
+		List<Sprite> sprites = game.getState() == GameState.BATTLE ? Arrays.asList(game.getEnemy()) : game.getSprites();
+		for (Sprite s : sprites) {
 			if (s == game.getPlayer()) {
 				continue;
 			}
@@ -111,6 +113,14 @@ public class RaycastingRenderer {
 		if (action != null) {
 			displayInteractionMessage(graphics, action);
 		}
+	}
+
+	//////////////////////
+	// Message Handling //
+	//////////////////////
+
+	public boolean hasMessages() {
+		return !messageQueue.isEmpty();
 	}
 
 	public void addMessage(String msg) {

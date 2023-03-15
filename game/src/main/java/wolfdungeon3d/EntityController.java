@@ -16,7 +16,7 @@ public interface EntityController {
 
 	public void onMouseClick(PVector mousePosition);
 
-	public void getCombatTurn(Combat combat);
+	public CombatCommand getCombatTurn(Combat combat);
 
 	public void update();
 }

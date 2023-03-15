@@ -243,8 +243,8 @@ public class Level {
 
 				int offsetX = Math.round(next.boundMin.x + randomizer.nextFloat() * ((float) next.size.x - roomSizeX));
 				int offsetY = Math.round(next.boundMin.y + randomizer.nextFloat() * ((float) next.size.y - roomSizeY));
-				for (int i = 1; i < roomSizeY - 1; i++) {
-					for (int j = 1; j < roomSizeX - 1; j++) {
+				for (int i = 1; i < roomSizeY; i++) {
+					for (int j = 1; j < roomSizeX; j++) {
 						grid[i + offsetY][j + offsetX] = Tile.ROOM.num;
 					}
 				}

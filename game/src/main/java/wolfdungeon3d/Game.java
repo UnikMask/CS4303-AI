@@ -1,19 +1,22 @@
 package wolfdungeon3d;
 
-import com.jogamp.newt.opengl.GLWindow;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
+import java.util.Set;
+
+import com.jogamp.newt.opengl.GLWindow;
+
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.core.PVector;
+import wolfdungeon3d.Level.EntityBehaviour;
 import wolfdungeon3d.Level.Tile;
 
 public class Game {
@@ -25,13 +28,13 @@ public class Game {
 	private static final int HUD_FG = 0xffedd49f;
 	private static final int HUD_STROKE_C = 0xff584c4c;
 	private static final float HUD_STROKE_S = 0.025f;
+	private static final float MIN_BATTLE_DIST = 1f;
 
 	private GLWindow nativew;
 	private PApplet applet;
 	private GameState state = GameState.LOADING;
 	private Entity player;
-	private HashSet<Entity> entities = new HashSet<>();
-	private HashSet<EntityController> controllers = new HashSet<>();
+	private HashMap<Entity, EntityController> entityControllerMap;
 	private String action = null;
 
 	private PlayerController controller;
@@ -41,11 +44,17 @@ public class Game {
 	private int floor = 0;
 	private long lastFrameTime = 0;
 
+	// Battle-related vars
+	private Combat combatInstance;
+	private Entity enemy = null;
+	private boolean isPlayerTurn = false;
+	private CombatCommand nextPlayerCommand = null;
+
 	// Mouse handling
 	private PVector mouseMovement = new PVector();
 
 	static enum GameState {
-		EXPLORE, BATTLE, LOADING, INTRO
+		EXPLORE, BATTLE, LOADING
 	}
 
 	/////////////////////////
@@ -69,7 +78,11 @@ public class Game {
 	}
 
 	public ArrayList<Sprite> getSprites() {
-		return new ArrayList<>(entities);
+		return new ArrayList<>(entityControllerMap.keySet());
+	}
+
+	public Entity getEnemy() {
+		return enemy;
 	}
 
 	////////////
@@ -77,14 +90,12 @@ public class Game {
 	////////////
 
 	public void setUp() {
-		System.out.println("Generating level...");
 		lvl = Level.generate(getLevelSize(floor), applet, floor, new Date().getTime() + new Random(floor).nextInt());
-		System.out.println("Collecting controllers...");
-		controllers = new HashSet<>(
-				lvl.getEntities().stream().map((b) -> new ComputerController(b, this)).collect(Collectors.toSet()));
-		entities = new HashSet<>(controllers.stream().map((c) -> c.getEntity()).collect(Collectors.toSet()));
+		entityControllerMap = new HashMap<>();
+		for (EntityBehaviour b : lvl.getEntities()) {
+			entityControllerMap.put(b.e, new ComputerController(b, this));
+		}
 
-		System.out.println("Reloading player...");
 		if (player == null) {
 			player = new Entity(lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
 					new Attributes(1, 1, 1, 1, 1, 1));
@@ -94,10 +105,7 @@ public class Game {
 			player.setVelocity(new PVector(0, 0));
 			player.setRotation(0);
 		}
-		controllers.add(controller);
-		entities.add(player);
-		renderer.addMessage("Welcome to floor " + floor + "!");
-		System.out.println("New level loaded!");
+		entityControllerMap.put(player, controller);
 	}
 
 	// Get the image of the game level as an appliable texture for the renderer.
@@ -116,19 +124,35 @@ public class Game {
 		double deltaT = ((float) (lastFrameTime - new Date().getTime())) / 1000.0;
 		lastFrameTime = new Date().getTime();
 
-		if (state == GameState.LOADING && lvl == null) {
-			System.out.println("Reload level!");
-			setUp();
-		} else if (state == GameState.LOADING && lvl != null) {
-			state = GameState.EXPLORE;
-		} else if (state == GameState.EXPLORE) {
+		s: switch (state) {
+		case LOADING:
+			if (lvl == null) {
+				setUp();
+			} else {
+				state = GameState.EXPLORE;
+			}
+			break;
+		case EXPLORE:
 			updateControllers(deltaT);
+			for (Entity e : entityControllerMap.keySet()) {
+				// Initiate battle
+				if (e != player && PVector.sub(e.getPosition(), player.getPosition()).mag() < MIN_BATTLE_DIST) {
+					state = GameState.BATTLE;
+					enemy = e;
+					break s;
+				}
+			}
+
 			IntTuple playerPosition = new IntTuple(player.getPosition());
 			if (lvl.getTile(playerPosition.a, playerPosition.b) == Tile.END) {
 				action = "go to the next floor.";
 			} else {
 				action = null;
 			}
+			break;
+		case BATTLE:
+			combatLogic();
+			break;
 		}
 		confineMouseMovement();
 	}
@@ -146,10 +170,9 @@ public class Game {
 
 	// Update controllers and entity positions based on time passed..
 	private void updateControllers(double deltaT) {
-		for (EntityController c : controllers) {
+		for (Entity e : entityControllerMap.keySet()) {
+			EntityController c = entityControllerMap.get(e);
 			c.update();
-		}
-		for (Entity e : entities) {
 			if (e.getVelocity().mag() > MAX_V) {
 				e.setVelocity(PVector.mult(e.getVelocity().normalize(), MAX_V));
 			}
@@ -226,34 +249,67 @@ public class Game {
 		}
 	}
 
+	/**
+	 * Handle combat logic. If the combat instance has messages, wait until all
+	 * messages have been consumed. If it is the player's turn, wait until the
+	 * player has responded before making an action. If it is the computer's turn,
+	 * immediately do an action.
+	 */
+	private void combatLogic() {
+		if (combatInstance == null) {
+			combatInstance = new Combat(Set.of(player), Set.of(enemy));
+		} else {
+			PVector dir = PVector.sub(player.getPosition(), enemy.getPosition());
+			player.setRotation(dir.heading() + (float) Math.PI / 2);
+
+			// Combat Logic -
+			if (combatInstance.hasMessages()) {
+				if (!renderer.hasMessages()) {
+					renderer.addMessage(combatInstance.getNewMessage());
+				}
+			} else {
+				Entity e = combatInstance.getCurrentEntity();
+				if (e == player) {
+					isPlayerTurn = true;
+					if (nextPlayerCommand != null) {
+						combatInstance.nextCommand(nextPlayerCommand);
+						nextPlayerCommand = null;
+					}
+				} else {
+					combatInstance.nextCommand(entityControllerMap.get(e).getCombatTurn(combatInstance));
+				}
+			}
+		}
+	}
+
 	////////////////////
 	// Input Handling //
 	////////////////////
 
 	public void keyPressed(Character key) {
 		controller.onKeyPressed(key);
-		for (EntityController c : controllers) {
+		for (EntityController c : entityControllerMap.values()) {
 			c.onKeyPressed(key);
 		}
 	}
 
 	public void keyReleased(Character key) {
 		controller.onKeyReleased(key);
-		for (EntityController c : controllers) {
+		for (EntityController c : entityControllerMap.values()) {
 			c.onKeyReleased(key);
 		}
 	}
 
 	public void keyHeld(Character key) {
 		controller.onKeyHeld(key);
-		for (EntityController c : controllers) {
+		for (EntityController c : entityControllerMap.values()) {
 			c.onKeyHeld(key);
 		}
 	}
 
 	public void mouseMoved(PVector mvt) {
 		controller.onMouseMove(mvt);
-		for (EntityController c : controllers) {
+		for (EntityController c : entityControllerMap.values()) {
 			c.onMouseMove(mvt);
 		}
 	}
@@ -263,13 +319,11 @@ public class Game {
 	///////////////
 
 	public void draw(PGraphics main, PGraphics hud) {
-		if (state == GameState.EXPLORE) {
-			renderHUD(hud);
-			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
-			PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
-			if (plane != null) {
-				renderer.draw(main, this, dir, plane, action);
-			}
+		renderHUD(hud);
+		PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
+		PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
+		if (plane != null) {
+			renderer.draw(main, this, dir, plane, action);
 		}
 	}
 
@@ -308,8 +362,15 @@ public class Game {
 		// Print text
 		String hpText = "HP: " + (player.getHP() * 100 / player.getMaxHP()) + "%";
 		String scoreText = "Score: " + score;
-		appletCtx.text(hpText, 0.2f * appletCtx.width, (0.5f * realSize.y + hudPosition.y) * appletCtx.height);
-		appletCtx.text(scoreText, 0.8f * appletCtx.width, (0.5f * realSize.y + hudPosition.y) * appletCtx.height);
+		String floorText = "Floor: " + floor;
+		String levelText = "Level: " + player.getLevel();
+		String xpText = "XP: " + player.getXP() + "/" + player.XPToNextLevel();
+		appletCtx.text(hpText, 0.2f * appletCtx.width, (0.25f * realSize.y + hudPosition.y) * appletCtx.height);
+		appletCtx.text(floorText, 0.2f * appletCtx.width, (0.75f * realSize.y + hudPosition.y) * appletCtx.height);
+		appletCtx.textSize((appletCtx.height * realSize.y) / 6);
+		appletCtx.text(scoreText, 0.8f * appletCtx.width, (0.2f * realSize.y + hudPosition.y) * appletCtx.height);
+		appletCtx.text(levelText, 0.8f * appletCtx.width, (0.5f * realSize.y + hudPosition.y) * appletCtx.height);
+		appletCtx.text(xpText, 0.8f * appletCtx.width, (0.8f * realSize.y + hudPosition.y) * appletCtx.height);
 		appletCtx.popStyle();
 	}
 

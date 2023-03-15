@@ -1,5 +1,6 @@
 package wolfdungeon3d;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -19,6 +20,25 @@ public class Combat {
 	private ArrayList<Entity> turnOrder;
 	private Iterator<Entity> turnCursor;
 	private Entity currentEntity = null;
+	private boolean ended = false;
+
+	private ArrayDeque<String> messages = new ArrayDeque<>();
+
+	/////////////////////////
+	// Getters and Setters //
+	/////////////////////////
+
+	public boolean hasMessages() {
+		return !messages.isEmpty();
+	}
+
+	public String getNewMessage() {
+		return !messages.isEmpty() ? messages.pollFirst() : null;
+	}
+
+	public boolean hasEnded() {
+		return ended;
+	}
 
 	public Entity getCurrentEntity() {
 		return currentEntity;
@@ -26,6 +46,54 @@ public class Combat {
 
 	public Set<Entity> getAllies(Entity e) {
 		return lhs.contains(e) ? rhs : rhs.contains(e) ? lhs : Set.of();
+	}
+
+	///////////////////////////
+	// Combat Round handling //
+	///////////////////////////
+
+	public void nextCommand(CombatCommand command) {
+		boolean isLhs = lhs.contains(currentEntity);
+
+		switch (command.getCommandType()) {
+		case ATTACK:
+			AttackCommand ac = (AttackCommand) command;
+			Entity target = ac.getTarget();
+			Set<Entity> side = getAllies(target);
+			float damage = ac.getDamage();
+			if (defenses.containsKey(target)) {
+				damage = defenses.get(target).apply(damage);
+			}
+			float takenDmg = target.takeDamage(damage);
+			messages.addLast((isLhs ? "Creature " : "You ") + "hit " + (isLhs ? "you " : "creature ") + "for "
+					+ takenDmg + " damage!");
+			if (target.getHP() <= 0) {
+				messages.addLast((isLhs ? "You " : "Creature ") + "died!");
+				side.remove(target);
+				for (Entity e : getAllies(currentEntity)) {
+					int newXP = e.addXP(target);
+					messages.addLast((isLhs ? "Creature " : "You ") + "get " + newXP + " experience points!");
+				}
+			}
+			break;
+		case DEFEND:
+			DefendCommand dc = (DefendCommand) command;
+			defenses.put(currentEntity, dc.getDefenseEffect());
+			messages.add((isLhs ? "Creature " : "You ") + "defended " + (isLhs ? "itself!" : "yourself!"));
+			break;
+		case FLEE:
+			break;
+		case CAST:
+		}
+
+		// End the round.
+		endRound(currentEntity);
+		do {
+			if (!turnCursor.hasNext()) {
+				turnCursor = turnOrder.iterator();
+			}
+			currentEntity = turnCursor.next();
+		} while (currentEntity.getHP() <= 0);
 	}
 
 	private void endRound(Entity e) {
@@ -45,43 +113,9 @@ public class Combat {
 		for (Function<Entity, Integer> effect : removals) {
 			buffs.get(e).remove(effect);
 		}
-
-	}
-
-	public void nextCommand(CombatCommand command) {
-
-		switch (command.getCommandType()) {
-		case ATTACK:
-			AttackCommand ac = (AttackCommand) command;
-			Entity target = ac.getTarget();
-			Set<Entity> side = getAllies(target);
-			float damage = ac.getDamage();
-			if (defenses.containsKey(target)) {
-				damage = defenses.get(target).apply(damage);
-			}
-			target.takeDamage(damage);
-			if (target.getHP() <= 0) {
-				side.remove(target);
-				for (Entity e : getAllies(currentEntity)) {
-					e.addXP(target);
-				}
-			}
-			break;
-		case DEFEND:
-			DefendCommand dc = (DefendCommand) command;
-			defenses.put(currentEntity, dc.getDefenseEffect());
-			break;
-		case FLEE:
-			break;
-		case CAST:
+		if (lhs.isEmpty() || rhs.isEmpty()) {
+			ended = true;
 		}
-		endRound(currentEntity);
-		do {
-			if (!turnCursor.hasNext()) {
-				turnCursor = turnOrder.iterator();
-			}
-			currentEntity = turnCursor.next();
-		} while (currentEntity.getHP() <= 0);
 	}
 
 	private void setUpBattle() {
@@ -104,6 +138,7 @@ public class Combat {
 		for (Entity e : entities) {
 			buffs.put(e, new HashMap<>());
 		}
+		messages.addLast("You are being attacked! ");
 	}
 
 	public Combat(Set<Entity> lhs, Set<Entity> rhs) {

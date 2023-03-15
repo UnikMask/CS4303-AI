@@ -54,8 +54,8 @@ public class PlayerController implements EntityController {
 		e.move(dir);
 	}
 
-	public void getCombatTurn(Combat combat) {
-
+	public CombatCommand getCombatTurn(Combat combat) {
+		return null;
 	}
 
 	/////////////////

@@ -88,7 +88,8 @@ public class ComputerController implements EntityController {
 		}
 	}
 
-	public void getCombatTurn(Combat combat) {
+	public CombatCommand getCombatTurn(Combat combat) {
+		return null;
 	}
 
 	////////////////////

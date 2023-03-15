@@ -64,12 +64,14 @@ public class Entity implements Sprite {
 		return xp;
 	}
 
-	public void addXP(Entity e) {
-		xp += e.level * XP_PER_LEVEL;
+	public int addXP(Entity e) {
+		int extraXp = e.level * XP_PER_LEVEL;
+		xp += extraXp;
 		while (xp / XPToNextLevel() > 1) {
 			xp -= XPToNextLevel();
 			level++;
 		}
+		return extraXp;
 	}
 
 	public Attributes getAttributes() {
@@ -86,6 +88,10 @@ public class Entity implements Sprite {
 
 	public PImage getImage() {
 		return tex;
+	}
+
+	public int getLevel() {
+		return level;
 	}
 
 	@Override
@@ -109,8 +115,9 @@ public class Entity implements Sprite {
 		this.affectAttributes = attributes.copy();
 	}
 
-	public void takeDamage(float damage) {
+	public float takeDamage(float damage) {
 		hp -= damage;
+		return damage;
 	}
 
 	public void move(PVector dir) {
