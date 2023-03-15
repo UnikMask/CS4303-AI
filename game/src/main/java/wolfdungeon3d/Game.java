@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import processing.core.PApplet;
+import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.core.PVector;
@@ -20,6 +21,10 @@ public class Game {
 	private static final PVector FLOOR_SIZE_INCREMENT = new PVector(2, 2);
 	private static final float DIR_L = 0.2f;
 	private static final float MAX_V = 3.0f;
+	private static final int HUD_BG = 0xff2e2a2b;
+	private static final int HUD_FG = 0xffedd49f;
+	private static final int HUD_STROKE_C = 0xff584c4c;
+	private static final float HUD_STROKE_S = 0.025f;
 
 	private GLWindow nativew;
 	private PApplet applet;
@@ -30,6 +35,7 @@ public class Game {
 
 	private PlayerController controller;
 	private RaycastingRenderer renderer;
+	private int score = 0;
 	private Level lvl;
 	private int floor = 0;
 	private long lastFrameTime = 0;
@@ -65,9 +71,9 @@ public class Game {
 		return new ArrayList<>(entities);
 	}
 
-	///////////////
-	// Rendering //
-	///////////////
+	////////////
+	// Set Up //
+	////////////
 
 	public void setUp() {
 		lvl = Level.generate(getLevelSize(floor), applet, floor, new Date().getTime() + new Random(floor).nextInt());
@@ -226,12 +232,13 @@ public class Game {
 	// Rendering //
 	///////////////
 
-	public void draw(PGraphics graphics) {
+	public void draw(PGraphics main, PGraphics hud) {
 		if (state == GameState.EXPLORE) {
+			renderHUD(hud);
 			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
-			PVector plane = getPlane(dir, new PVector(graphics.width, graphics.height), (float) (Math.PI / 2f));
+			PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
 			if (plane != null) {
-				renderer.draw(graphics, this, dir, plane);
+				renderer.draw(main, this, dir, plane);
 			}
 		}
 	}
@@ -245,6 +252,35 @@ public class Game {
 		float dist = PApplet.tan(fov / 2);
 		PVector plane = dir.cross(new PVector(0, 0, dist));
 		return PVector.add(plane, new PVector(0, 0, dir.mag() * dist * yRatio));
+	}
+
+	// Render the HUD on screen
+	public void renderHUD(PGraphics appletCtx) {
+		PVector realSize = new PVector(1f, 0.2f);
+		PVector hudPosition = new PVector(0f, 0.8f);
+
+		// Draw HUD Box
+		appletCtx.pushStyle();
+		appletCtx.fill(HUD_BG);
+		appletCtx.stroke(HUD_STROKE_C);
+		appletCtx.strokeWeight(HUD_STROKE_S * appletCtx.height);
+		appletCtx.rect((HUD_STROKE_S / 2) * appletCtx.height, hudPosition.y * appletCtx.height,
+				appletCtx.width - HUD_STROKE_S * appletCtx.height, realSize.y * appletCtx.height);
+		appletCtx.popStyle();
+
+		// Set up HUD style
+		appletCtx.pushStyle();
+		appletCtx.textAlign(PConstants.CENTER, PConstants.CENTER);
+		appletCtx.textFont(Assets.getFont("FFFFORWA.TTF"));
+		appletCtx.fill(HUD_FG);
+		appletCtx.textSize((appletCtx.height * realSize.y) / 4);
+
+		// Print text
+		String hpText = "HP: " + (player.getHP() * 100 / player.getMaxHP()) + "%";
+		String scoreText = "Score: " + score;
+		appletCtx.text(hpText, 0.2f * appletCtx.width, (0.5f * realSize.y + hudPosition.y) * appletCtx.height);
+		appletCtx.text(scoreText, 0.8f * appletCtx.width, (0.5f * realSize.y + hudPosition.y) * appletCtx.height);
+		appletCtx.popStyle();
 	}
 
 	//////////////////

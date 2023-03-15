@@ -128,5 +128,6 @@ public class Entity implements Sprite {
 		this.tex = tex;
 		this.attributes = attr;
 		this.affectAttributes = attr.copy();
+		this.hp = this.getMaxHP();
 	}
 }

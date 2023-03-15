@@ -14,9 +14,11 @@ import processing.core.PVector;
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
 	static private final PVector MAIN_CTX_POS = new PVector(0, 0);
+	static private final PVector HUD_CTX_POS = new PVector(0, 0.8f);
 
 	// State Handling
 	PGraphics mainGraphicsCtx;
+	PGraphics hudCtx;
 	Game game;
 	RunnerState state = RunnerState.MENU;
 	MainMenu mainMenu;
@@ -93,8 +95,8 @@ public class Runner extends PApplet {
 
 	public void setup() {
 		frameRate(60);
-		mainGraphicsCtx = createGraphics((int) ((float) width * MAIN_CTX_PERCENT.x),
-				(int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P3D);
+		mainGraphicsCtx = createGraphics(width, (int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P3D);
+		hudCtx = createGraphics(width, (int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P2D);
 		Assets.createInstance(this);
 		mainMenu = new MainMenu(this);
 	}
@@ -106,14 +108,14 @@ public class Runner extends PApplet {
 
 	public void draw() {
 		update();
-		background(128);
+		background(0);
 		switch (state) {
 		case GAME:
 			if (game != null) {
 				mainGraphicsCtx.colorMode(PGraphics.ARGB);
 				mainGraphicsCtx.beginDraw();
 				mainGraphicsCtx.blendMode(PGraphics.BLEND);
-				game.draw(mainGraphicsCtx);
+				game.draw(mainGraphicsCtx, this.getGraphics());
 				mainGraphicsCtx.endDraw();
 				image(mainGraphicsCtx, MAIN_CTX_POS.x, MAIN_CTX_POS.y);
 			}
