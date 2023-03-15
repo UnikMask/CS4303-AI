@@ -62,7 +62,7 @@ public class Game {
 	/////////////////////////
 
 	public PVector getLevelSize(int floor) {
-		return PVector.add(BASE_FLOOR_SIZE, PVector.mult(FLOOR_SIZE_INCREMENT, floor));
+		return PVector.add(new PVector(40, 40), PVector.mult(FLOOR_SIZE_INCREMENT, floor));
 	}
 
 	public GameState getState() {

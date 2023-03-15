@@ -15,9 +15,9 @@ import processing.core.PImage;
 import processing.core.PVector;
 
 public class Level {
-	private static final PVector MAX_ROOM_SIZE = new PVector(20, 20);
-	private static final PVector MIN_ROOM_SIZE = new PVector(5, 5);
-	private static final PVector MIN_DIV_SIZE = new PVector(10, 10);
+	private static final IntTuple MAX_ROOM_SIZE = new IntTuple(20, 20);
+	private static final IntTuple MIN_ROOM_SIZE = new IntTuple(5, 5);
+	private static final IntTuple MIN_DIV_SIZE = new IntTuple(10, 10);
 	private static final String ENEMY_SPRITE = "sphere.png";
 	private PVector size;
 	private List<String> textures = Arrays.asList("wall.png", "floor.png", "ceiling.jpg", "bonewall.png");
@@ -144,16 +144,13 @@ public class Level {
 		Random rGenRandom = new Random(seed);
 
 		// Generate dungeon using BSP
-		System.out.println("Generating rooms...");
 		BinaryNode root = ret.generatePartitions(rGenRandom, size);
 		ArrayList<Room> rooms = ret.generateRoomsFromPartition(root, rGenRandom);
 		ret.generateCorridors(root, rGenRandom);
 
 		// Get a starting room and a player
-		System.out.println("Generating starting room...");
 		Room startingRoom = rooms.get(Math.abs(rGenRandom.nextInt()) % rooms.size());
 		ret.startPosition = PVector.add(startingRoom.pos, new PVector(1.5f, 1.5f, 0.35f));
-		System.out.println("Generating entities...");
 		ret.generateEntities(rGenRandom, floor, rooms, startingRoom);
 
 		// Get and ending room
@@ -161,6 +158,7 @@ public class Level {
 		IntTuple endLocation = IntTuple.add(new IntTuple(endRoom.pos), new IntTuple(
 				rGenRandom.nextInt(0, (int) endRoom.size.x - 1), rGenRandom.nextInt(0, (int) endRoom.size.y - 1)));
 		ret.grid[endLocation.b][endLocation.a] = Tile.END.num;
+		System.out.println(ret);
 		return ret;
 	}
 
@@ -188,35 +186,30 @@ public class Level {
 		ArrayDeque<BinaryNode> q = new ArrayDeque<>(Arrays.asList(root));
 		while (!q.isEmpty()) {
 			BinaryNode next = q.pollFirst();
-			if (!(next.size.x > MIN_DIV_SIZE.x && next.size.y > MIN_DIV_SIZE.y)) {
+			if (!(next.size.x > MIN_DIV_SIZE.a && next.size.y > MIN_DIV_SIZE.b)) {
 				continue;
 			} else if (!randomizer.nextBoolean()
-					&& (next.size.x <= MAX_ROOM_SIZE.x && next.size.y <= MAX_ROOM_SIZE.y)) {
+					&& (next.size.x <= MAX_ROOM_SIZE.a && next.size.y <= MAX_ROOM_SIZE.b)) {
 				continue;
 			}
 
 			boolean vSplit;
-			if (next.size.x < MAX_ROOM_SIZE.x) {
+			if (next.size.x < MAX_ROOM_SIZE.a) {
 				vSplit = false;
-			} else if (next.size.y < MAX_ROOM_SIZE.y) {
+			} else if (next.size.y < MAX_ROOM_SIZE.b) {
 				vSplit = true;
 			} else {
 				vSplit = randomizer.nextBoolean();
 			}
 
-			float ratio = randomizer.nextFloat();
 			if (vSplit) {
-				PVector splitSize = new PVector(Math.min(ratio * (next.size.x - MIN_ROOM_SIZE.x) + MIN_ROOM_SIZE.x,
-						next.size.x - MIN_ROOM_SIZE.x), 0);
-				next.l = new BinaryNode(next, next.boundMin,
-						PVector.add(new PVector(next.boundMin.x, next.boundMax.y), splitSize));
-				next.r = new BinaryNode(next, PVector.add(next.boundMin, splitSize), next.boundMax);
+				int split = randomizer.nextInt(MIN_ROOM_SIZE.a, (int) next.size.x - MIN_ROOM_SIZE.a + 1);
+				next.l = new BinaryNode(next, next.boundMin, new PVector(next.boundMin.x + split, next.boundMax.y));
+				next.r = new BinaryNode(next, new PVector(next.boundMin.x + split, next.boundMin.y), next.boundMax);
 			} else {
-				PVector splitSize = new PVector(0, Math.min(ratio * (next.size.y - MIN_ROOM_SIZE.y) + MIN_ROOM_SIZE.x,
-						next.size.y - MIN_ROOM_SIZE.y));
-				next.l = new BinaryNode(next, next.boundMin,
-						PVector.add(new PVector(next.boundMax.x, next.boundMin.y), splitSize));
-				next.r = new BinaryNode(next, PVector.add(next.boundMin, splitSize), next.boundMax);
+				int split = randomizer.nextInt(MIN_ROOM_SIZE.b, (int) next.size.y - MIN_ROOM_SIZE.b + 1);
+				next.l = new BinaryNode(next, next.boundMin, new PVector(next.boundMax.x, next.boundMin.y + split));
+				next.r = new BinaryNode(next, new PVector(next.boundMin.x, next.boundMin.y + split), next.boundMax);
 			}
 			next.vSplit = vSplit;
 			q.addLast(next.l);
@@ -236,15 +229,21 @@ public class Level {
 				roomStack.addFirst(next.l);
 			} else {
 				// Create a room and reduce leaf size and bounds to room
-				int roomSizeX = Math.round(
-						MIN_ROOM_SIZE.x + (0.5f + randomizer.nextFloat() / 2f) * (next.size.x - MIN_ROOM_SIZE.x));
-				int roomSizeY = Math.round(
-						MIN_ROOM_SIZE.y + (0.5f + randomizer.nextFloat() / 2f) * (next.size.y - MIN_ROOM_SIZE.y));
+				int roomSizeX = MIN_ROOM_SIZE.a + ((int) next.size.x - MIN_ROOM_SIZE.a) / 2
+						+ (((int) next.size.x - MIN_ROOM_SIZE.a) / 2 > 0
+								? randomizer.nextInt(0, ((int) next.size.x - MIN_ROOM_SIZE.a)) / 2
+								: 0)
+						- 2;
+				int roomSizeY = MIN_ROOM_SIZE.b + ((int) next.size.y - MIN_ROOM_SIZE.b) / 2
+						+ (((int) next.size.y - MIN_ROOM_SIZE.b) / 2 > 0
+								? randomizer.nextInt(0, ((int) next.size.y - MIN_ROOM_SIZE.b)) / 2
+								: 0)
+						- 2;
 
-				int offsetX = Math.round(next.boundMin.x + randomizer.nextFloat() * ((float) next.size.x - roomSizeX));
-				int offsetY = Math.round(next.boundMin.y + randomizer.nextFloat() * ((float) next.size.y - roomSizeY));
-				for (int i = 1; i < roomSizeY; i++) {
-					for (int j = 1; j < roomSizeX; j++) {
+				int offsetX = (int) next.boundMin.x + randomizer.nextInt(0, (int) next.size.x - roomSizeX - 1);
+				int offsetY = (int) next.boundMin.y + randomizer.nextInt(0, (int) next.size.y - roomSizeY - 1);
+				for (int i = 1; i <= roomSizeY; i++) {
+					for (int j = 1; j <= roomSizeX; j++) {
 						grid[i + offsetY][j + offsetX] = Tile.ROOM.num;
 					}
 				}
