@@ -64,7 +64,7 @@ void main() {
 			sideDist.z += deltaDist.z;
 			map.z += tstep.z;
 			side = tstep.z == 1? 3: 2;
-			hit = true;
+			hit = tstep.z == 1? map.z > 2 : true;
 		}
 		tile = texelFetch(texture, ivec2(map.x, map.y), 0);
 		if (tile.rgb == vec3(0,0,0)) { // Hit something that isn't space.
