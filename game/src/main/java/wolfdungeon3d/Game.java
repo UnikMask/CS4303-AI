@@ -25,7 +25,7 @@ public class Game {
 	private static final float DIR_L = 0.2f;
 	private static final float MAX_V = 3.0f;
 	private static final int HUD_BG = 0xff2e2a2b;
-	private static final int HUD_FG = 0xffedd49f;
+	private static final int HUD_FG = 0xffe9d49c;
 	private static final int HUD_STROKE_C = 0xff584c4c;
 	private static final float HUD_STROKE_S = 0.025f;
 	private static final float MIN_BATTLE_DIST = 1f;
@@ -83,6 +83,10 @@ public class Game {
 
 	public Entity getEnemy() {
 		return enemy;
+	}
+
+	public void setNextPlayerCommand(CombatCommand cc) {
+		this.nextPlayerCommand = cc;
 	}
 
 	////////////

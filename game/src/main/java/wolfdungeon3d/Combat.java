@@ -22,6 +22,7 @@ public class Combat {
 	private Entity currentEntity = null;
 	private boolean ended = false;
 
+	// Message-handling
 	private ArrayDeque<String> messages = new ArrayDeque<>();
 
 	/////////////////////////
@@ -141,6 +142,12 @@ public class Combat {
 		messages.addLast("You are being attacked! ");
 	}
 
+	/**
+	 * Constructor for a combat instance.
+	 *
+	 * @param lhs Left hand side of the combat - the player
+	 * @param rhs The right hand side of the combat - the enemies
+	 */
 	public Combat(Set<Entity> lhs, Set<Entity> rhs) {
 		this.lhs = lhs;
 		this.rhs = rhs;
