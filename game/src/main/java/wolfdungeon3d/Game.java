@@ -46,7 +46,7 @@ public class Game {
 	private static final float HUD_COMBAT_RIGHT_ANCHOR_W = 0.97f;
 
 	// Inventory Constants
-	private static final IntTuple INVENTORY_SIZE = new IntTuple(5, 2);
+	private static final IntTuple INVENTORY_SIZE = new IntTuple(4, 8);
 
 	private GLWindow nativew;
 	private PApplet applet;
