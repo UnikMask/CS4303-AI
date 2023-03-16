@@ -17,6 +17,8 @@ public class ComputerController implements EntityController {
 	private static final List<IntTuple> neighbours = Arrays.asList(new IntTuple(0, 1), new IntTuple(1, 0),
 			new IntTuple(0, -1), new IntTuple(-1, 0), new IntTuple(1, 1), new IntTuple(1, -1), new IntTuple(-1, -1),
 			new IntTuple(-1, 1));
+	private static final float AI_VISIBLE_DIST = 3.0f;
+
 	private Entity e;
 	private Game game;
 	private PVector idleStart;
@@ -68,23 +70,32 @@ public class ComputerController implements EntityController {
 
 	public void update() {
 		if (game.getState() == GameState.EXPLORE) { // Get next decision
-			currentPath = getPath(new IntTuple(game.getPlayer().getPosition()), true);
+			// Check for hostility
+			e.setHostile(traceRay(game.getPlayer().getPosition()) < AI_VISIBLE_DIST);
+			// Check for path to take
+			if (e.isHostile()) {
+				currentPath = getPath(new IntTuple(game.getPlayer().getPosition()), wasHostile);
+				wasHostile = true;
+			} else {
+				wasHostile = false;
+				if (chasingStart) {
+					currentPath = getPath(new IntTuple(idleStart), true);
+				} else {
+					currentPath = getPath(new IntTuple(idleEnd), true);
+				}
+			}
+
+			// Clean path and switch idle behaviour
 			while (!currentPath.isEmpty() && IntTuple.awayBy(e.getPosition(), currentPath.get(0)) <= 0.8f) {
 				currentPath.remove(0);
 			}
-
-			/*
-			 * if (e.isHostile()) { currentPath = getPath(new
-			 * IntTuple(game.getPlayer().getPosition()), wasHostile); wasHostile = true; }
-			 * else { wasHostile = false; if (chasingStart) { currentPath = getPath(new
-			 * IntTuple(idleEnd), false); } else { currentPath = getPath(new
-			 * IntTuple(idleStart), false); } }
-			 */
 			if (!currentPath.isEmpty()) {
 				PVector dir = PVector.sub(new PVector(currentPath.get(0).a + 0.5f, currentPath.get(0).b + 0.5f),
 						e.getPosition());
 				e.setRotation(dir.heading());
 				e.move(new PVector(-dir.mag(), 0));
+			} else if (!e.isHostile()) {
+				chasingStart = !chasingStart;
 			}
 		}
 	}
@@ -93,13 +104,48 @@ public class ComputerController implements EntityController {
 		return null;
 	}
 
-	////////////////////
-	// Public Methods //
-	////////////////////
-
 	/////////////////////
 	// Private Methods //
 	/////////////////////
+
+	private float traceRay(PVector target) {
+		PVector dir = PVector.sub(target, e.getPosition()).normalize();
+		PVector deltaDist = new PVector(100, 100);
+		if (dir.x != 0) {
+			deltaDist.x = 1.0f / Math.abs(dir.x);
+		}
+		if (dir.y != 0) {
+			deltaDist.y = 1.0f / Math.abs(dir.y);
+		}
+		IntTuple step = new IntTuple(1, 1);
+		IntTuple mapPos = new IntTuple(e.getPosition());
+		PVector sideDist = PVector.sub(PVector.add(new PVector(mapPos.a, mapPos.b), new PVector(1, 1)),
+				e.getPosition());
+		sideDist = new PVector(sideDist.x * deltaDist.x, sideDist.y * deltaDist.y);
+
+		if (dir.x < 0) {
+			step.a = -1;
+			sideDist.x = (float) (e.getPosition().x - mapPos.a) * deltaDist.x;
+		}
+		if (dir.y < 0) {
+			step.b = -1;
+			sideDist.y = (float) (e.getPosition().y - mapPos.b) * deltaDist.y;
+		}
+		boolean hit = false;
+		while (!hit && !mapPos.equals(new IntTuple(target))) {
+			if (sideDist.x < sideDist.y) {
+				sideDist.x += deltaDist.x;
+				mapPos.a += step.a;
+			} else {
+				sideDist.y += deltaDist.y;
+				mapPos.b += step.b;
+			}
+			if (game.getLevel().getTile(mapPos.a, mapPos.b) == Tile.WALL) {
+				hit = true;
+			}
+		}
+		return hit ? Float.MAX_VALUE : PVector.sub(target, e.getPosition()).mag();
+	}
 
 	private ArrayList<IntTuple> getPath(IntTuple target, IntTuple start, HashMap<IntTuple, IntTuple> pathMap) {
 		ArrayDeque<IntTuple> path = new ArrayDeque<>(Arrays.asList(target));

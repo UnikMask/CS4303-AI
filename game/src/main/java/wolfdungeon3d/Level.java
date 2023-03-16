@@ -138,8 +138,15 @@ public class Level {
 		}
 	}
 
-	public static Level generate(PVector size, PApplet applet, int floor, long seed) {
-		Level ret = new Level(size, applet);
+	/**
+	 * Generate a new game level based on a seed.
+	 *
+	 * @param size  The size of the level to generate.
+	 * @param floor The floor it is on. Affects mob difficulty.
+	 * @param seed  The random seed to use.
+	 */
+	public static Level generate(PVector size, int floor, long seed) {
+		Level ret = new Level(size);
 
 		Random rGenRandom = new Random(seed);
 
@@ -158,7 +165,6 @@ public class Level {
 		IntTuple endLocation = IntTuple.add(new IntTuple(endRoom.pos), new IntTuple(
 				rGenRandom.nextInt(0, (int) endRoom.size.x - 1), rGenRandom.nextInt(0, (int) endRoom.size.y - 1)));
 		ret.grid[endLocation.b][endLocation.a] = Tile.END.num;
-		System.out.println(ret);
 		return ret;
 	}
 
@@ -181,6 +187,8 @@ public class Level {
 	// Private Methods //
 	/////////////////////
 
+	// Generate partitions via Binary Space Partitioning split of the grid
+	// until a satisfactory number of room splits are made.
 	private BinaryNode generatePartitions(Random randomizer, PVector size) {
 		BinaryNode root = new BinaryNode(null, new PVector(0, 0), new PVector(size.x, size.y));
 		ArrayDeque<BinaryNode> q = new ArrayDeque<>(Arrays.asList(root));
@@ -218,6 +226,7 @@ public class Level {
 		return root;
 	}
 
+	// Generate a set of rooms based on a tree of grid BSP splits.
 	private ArrayList<Room> generateRoomsFromPartition(BinaryNode rootNode, Random randomizer) {
 		// 2. Create rooms for each leaf nodes
 		ArrayDeque<BinaryNode> roomStack = new ArrayDeque<>(Arrays.asList(rootNode));
@@ -255,6 +264,7 @@ public class Level {
 		return rooms;
 	}
 
+	// Generate corridors between rooms on a grid.
 	private void generateCorridors(BinaryNode rootNode, Random randomizer) {
 		ArrayDeque<BinaryNode> corridorStack = new ArrayDeque<>(Arrays.asList(rootNode));
 		while (!corridorStack.isEmpty()) {
@@ -294,6 +304,7 @@ public class Level {
 
 	}
 
+	// Draw a corridor betweeen 2 points.
 	private PVector drawCorridor(PVector ptA, PVector ptB, boolean xFirst) {
 		Function<PVector, Consumer<PVector>> xLoop = (start) -> (end) -> {
 			int dist = (int) (end.x - start.x);
@@ -324,21 +335,21 @@ public class Level {
 		}
 	}
 
+	// Generate entities on each rooms except the starting room.
 	private void generateEntities(Random randomizer, int floor, List<Room> rooms, Room playerRoom) {
 		behaviours = new ArrayList<>();
 		for (Room room : rooms.stream().filter((r) -> r != playerRoom).collect(Collectors.toList())) {
 			EntityBehaviour behaviour = new EntityBehaviour();
-			/*
-			 * boolean xdir = randomizer.nextBoolean(); if (xdir) { behaviour.startPoint =
-			 * new PVector(1, Math.abs(randomizer.nextInt()) % (room.size.y - 1));
-			 * behaviour.endPoint = new PVector(Math.abs(randomizer.nextInt()) %
-			 * (room.size.y - 1) - 1, behaviour.startPoint.y); } else { behaviour.startPoint
-			 * = new PVector(Math.abs(randomizer.nextInt()) % (room.size.x - 1), 1);
-			 * behaviour.endPoint = new PVector(behaviour.startPoint.x,
-			 * Math.abs(randomizer.nextInt()) % (room.size.y - 1) - 1); }
-			 */
-			behaviour.startPoint = room.pos;
-			behaviour.endPoint = PVector.add(room.pos, PVector.sub(room.size, new PVector(1, 1)));
+
+			boolean xdir = randomizer.nextBoolean();
+			if (xdir) {
+				behaviour.startPoint = new PVector(room.pos.x, room.pos.y + randomizer.nextInt(0, (int) room.size.y));
+				behaviour.endPoint = new PVector(room.pos.x + room.size.x - 1, behaviour.startPoint.y);
+			} else {
+				behaviour.startPoint = new PVector(room.pos.x + randomizer.nextInt(0, (int) room.size.x), room.pos.y);
+				behaviour.endPoint = new PVector(behaviour.startPoint.x, room.pos.y + room.size.y - 1);
+			}
+
 			behaviour.e = new Entity(PVector.add(behaviour.startPoint, new PVector(1, 1, 0.25f)),
 					new PVector(0.5f, 0.5f, 0.5f), Assets.getSprite(ENEMY_SPRITE),
 					Attributes.getRandomAttributes(floor, randomizer));
@@ -384,7 +395,7 @@ public class Level {
 	// Constructors //
 	//////////////////
 
-	public Level(PVector size, PApplet applet) {
+	public Level(PVector size) {
 		this.size = size;
 		grid = new int[Math.round(size.y)][Math.round(size.x)];
 	}

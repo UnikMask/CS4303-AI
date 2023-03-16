@@ -62,7 +62,7 @@ public class Game {
 	/////////////////////////
 
 	public PVector getLevelSize(int floor) {
-		return PVector.add(new PVector(40, 40), PVector.mult(FLOOR_SIZE_INCREMENT, floor));
+		return PVector.add(BASE_FLOOR_SIZE, PVector.mult(FLOOR_SIZE_INCREMENT, floor));
 	}
 
 	public GameState getState() {
@@ -90,7 +90,7 @@ public class Game {
 	////////////
 
 	public void setUp() {
-		lvl = Level.generate(getLevelSize(floor), applet, floor, new Date().getTime() + new Random(floor).nextInt());
+		lvl = Level.generate(getLevelSize(floor), floor, new Date().getTime() + new Random(floor).nextInt());
 		entityControllerMap = new HashMap<>();
 		for (EntityBehaviour b : lvl.getEntities()) {
 			entityControllerMap.put(b.e, new ComputerController(b, this));
