@@ -29,6 +29,10 @@ public class Game {
 	private static final int HUD_STROKE_C = 0xff584c4c;
 	private static final float HUD_STROKE_S = 0.025f;
 	private static final float MIN_BATTLE_DIST = 1f;
+	private static final float HUD_EXPLORE_LEFT_ANCHOR_W = 0.1f;
+	private static final float HUD_EXPLORE_RIGHT_ANCHOR_W = 0.9f;
+	private static final float HUD_COMBAT_LEFT_ANCHOR_W = 0.03f;
+	private static final float HUD_COMBAT_RIGHT_ANCHOR_W = 0.97f;
 
 	private GLWindow nativew;
 	private PApplet applet;
@@ -47,8 +51,8 @@ public class Game {
 	// Battle-related vars
 	private Combat combatInstance;
 	private Entity enemy = null;
-	private boolean isPlayerTurn = false;
 	private CombatCommand nextPlayerCommand = null;
+	private CombatDialogBox playerCombatDialog;
 
 	// Mouse handling
 	private PVector mouseMovement = new PVector();
@@ -89,6 +93,10 @@ public class Game {
 		this.nextPlayerCommand = cc;
 	}
 
+	public CombatDialogBox getPlayerCombatDialogBox() {
+		return playerCombatDialog;
+	}
+
 	////////////
 	// Set Up //
 	////////////
@@ -101,8 +109,8 @@ public class Game {
 		}
 
 		if (player == null) {
-			player = new Entity(lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
-					new Attributes(1, 1, 1, 1, 1, 1));
+			player = new Entity("You", lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
+					Attributes.getDefaultPlayerAttributes());
 			controller = new PlayerController(player, this, new InputSettings());
 		} else {
 			player.setPosition(lvl.getStartPosition());
@@ -110,6 +118,7 @@ public class Game {
 			player.setRotation(0);
 		}
 		entityControllerMap.put(player, controller);
+		renderer.addMessage("Welcome to floor " + floor);
 	}
 
 	// Get the image of the game level as an appliable texture for the renderer.
@@ -268,18 +277,21 @@ public class Game {
 
 			// Combat Logic -
 			if (combatInstance.hasMessages()) {
+				playerCombatDialog = null;
 				if (!renderer.hasMessages()) {
 					renderer.addMessage(combatInstance.getNewMessage());
 				}
 			} else {
 				Entity e = combatInstance.getCurrentEntity();
 				if (e == player) {
-					isPlayerTurn = true;
 					if (nextPlayerCommand != null) {
 						combatInstance.nextCommand(nextPlayerCommand);
 						nextPlayerCommand = null;
+					} else if (playerCombatDialog == null) {
+						playerCombatDialog = new CombatDialogBox(e, this);
 					}
 				} else {
+					playerCombatDialog = null;
 					combatInstance.nextCommand(entityControllerMap.get(e).getCombatTurn(combatInstance));
 				}
 			}
@@ -294,6 +306,9 @@ public class Game {
 		controller.onKeyPressed(key);
 		for (EntityController c : entityControllerMap.values()) {
 			c.onKeyPressed(key);
+		}
+		if (key == '\n') {
+			renderer.nextMessage();
 		}
 	}
 
@@ -323,7 +338,7 @@ public class Game {
 	///////////////
 
 	public void draw(PGraphics main, PGraphics hud) {
-		renderHUD(hud);
+		renderHUD();
 		PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
 		PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
 		if (plane != null) {
@@ -343,39 +358,47 @@ public class Game {
 	}
 
 	// Render the HUD on screen
-	public void renderHUD(PGraphics appletCtx) {
+	public void renderHUD() {
 		PVector realSize = new PVector(1f, 0.2f);
 		PVector hudPosition = new PVector(0f, 0.8f);
 
 		// Draw HUD Box
-		appletCtx.pushStyle();
-		appletCtx.fill(HUD_BG);
-		appletCtx.stroke(HUD_STROKE_C);
-		appletCtx.strokeWeight(HUD_STROKE_S * appletCtx.height);
-		appletCtx.rect((HUD_STROKE_S / 2) * appletCtx.height, hudPosition.y * appletCtx.height,
-				appletCtx.width - HUD_STROKE_S * appletCtx.height, realSize.y * appletCtx.height);
-		appletCtx.popStyle();
+		applet.pushStyle();
+		applet.fill(HUD_BG);
+		applet.stroke(HUD_STROKE_C);
+		applet.strokeWeight(HUD_STROKE_S * applet.height);
+		applet.rect((HUD_STROKE_S / 2) * applet.height, hudPosition.y * applet.height,
+				applet.width - HUD_STROKE_S * applet.height, realSize.y * applet.height);
+		applet.popStyle();
 
 		// Set up HUD style
-		appletCtx.pushStyle();
-		appletCtx.textAlign(PConstants.CENTER, PConstants.CENTER);
-		appletCtx.textFont(Assets.getFont("FFFFORWA.TTF"));
-		appletCtx.fill(HUD_FG);
-		appletCtx.textSize((appletCtx.height * realSize.y) / 4);
+		applet.pushStyle();
+		applet.textFont(Assets.getFont("FFFFORWA.TTF"));
+		applet.fill(HUD_FG);
+		applet.textSize((applet.height * realSize.y) / 4);
 
 		// Print text
+		float leftAnchor = state == GameState.BATTLE ? HUD_COMBAT_LEFT_ANCHOR_W : HUD_EXPLORE_LEFT_ANCHOR_W;
+		float rightAnchor = state == GameState.BATTLE ? HUD_COMBAT_RIGHT_ANCHOR_W : HUD_EXPLORE_RIGHT_ANCHOR_W;
 		String hpText = "HP: " + (player.getHP() * 100 / player.getMaxHP()) + "%";
 		String scoreText = "Score: " + score;
 		String floorText = "Floor: " + floor;
 		String levelText = "Level: " + player.getLevel();
 		String xpText = "XP: " + player.getXP() + "/" + player.XPToNextLevel();
-		appletCtx.text(hpText, 0.2f * appletCtx.width, (0.25f * realSize.y + hudPosition.y) * appletCtx.height);
-		appletCtx.text(floorText, 0.2f * appletCtx.width, (0.75f * realSize.y + hudPosition.y) * appletCtx.height);
-		appletCtx.textSize((appletCtx.height * realSize.y) / 6);
-		appletCtx.text(scoreText, 0.8f * appletCtx.width, (0.2f * realSize.y + hudPosition.y) * appletCtx.height);
-		appletCtx.text(levelText, 0.8f * appletCtx.width, (0.5f * realSize.y + hudPosition.y) * appletCtx.height);
-		appletCtx.text(xpText, 0.8f * appletCtx.width, (0.8f * realSize.y + hudPosition.y) * appletCtx.height);
-		appletCtx.popStyle();
+		applet.textAlign(PConstants.LEFT, PConstants.CENTER);
+		applet.text(hpText, leftAnchor * applet.width, (0.25f * realSize.y + hudPosition.y) * applet.height);
+		applet.text(floorText, leftAnchor * applet.width, (0.75f * realSize.y + hudPosition.y) * applet.height);
+		applet.textSize((applet.height * realSize.y) / 6);
+		applet.textAlign(PConstants.RIGHT, PConstants.CENTER);
+		applet.text(scoreText, rightAnchor * applet.width, (0.2f * realSize.y + hudPosition.y) * applet.height);
+		applet.text(levelText, rightAnchor * applet.width, (0.5f * realSize.y + hudPosition.y) * applet.height);
+		applet.text(xpText, rightAnchor * applet.width, (0.8f * realSize.y + hudPosition.y) * applet.height);
+		applet.popStyle();
+
+		if (playerCombatDialog != null) {
+			playerCombatDialog.draw(applet.getGraphics(), new PVector(applet.mouseX, applet.mouseY),
+					new PVector(applet.width, applet.height));
+		}
 	}
 
 	//////////////////

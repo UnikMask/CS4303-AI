@@ -12,6 +12,7 @@ public class Entity implements Sprite {
 	private static final int XP_BASE = 128;
 	private static final int XP_PER_LEVEL = 32;
 
+	private String name;
 	private PImage tex;
 	private PVector position;
 	private PVector velocity = new PVector();
@@ -130,7 +131,7 @@ public class Entity implements Sprite {
 	// Constructors //
 	//////////////////
 
-	public Entity(PVector position, PVector size, PImage tex, Attributes attr) {
+	public Entity(String name, PVector position, PVector size, PImage tex, Attributes attr) {
 		this.position = position;
 		this.size = size;
 		this.tex = tex;

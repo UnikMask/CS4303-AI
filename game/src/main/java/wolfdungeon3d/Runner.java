@@ -17,7 +17,6 @@ public class Runner extends PApplet {
 
 	// State Handling
 	PGraphics mainGraphicsCtx;
-	PGraphics hudCtx;
 	Game game;
 	RunnerState state = RunnerState.MENU;
 	MainMenu mainMenu;
@@ -95,7 +94,6 @@ public class Runner extends PApplet {
 	public void setup() {
 		frameRate(60);
 		mainGraphicsCtx = createGraphics(width, (int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P3D);
-		hudCtx = createGraphics(width, (int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P2D);
 		Assets.createInstance(this);
 		mainMenu = new MainMenu(this);
 	}

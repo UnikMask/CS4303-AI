@@ -128,8 +128,8 @@ public class Combat {
 		};
 		entities.sort(new Comparator<Entity>() {
 			public int compare(Entity o1, Entity o2) {
-				return o1.getNewInitiative(new Random(initiativeSeed))
-						- o2.getNewInitiative(new Random(initiativeSeed));
+				return -o1.getNewInitiative(new Random(initiativeSeed))
+						+ o2.getNewInitiative(new Random(initiativeSeed));
 			}
 		});
 		turnOrder = entities;

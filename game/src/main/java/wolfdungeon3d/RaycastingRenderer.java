@@ -33,16 +33,16 @@ public class RaycastingRenderer {
 	// Interaction display
 	private static final String INTERACT_MSG = "Press <E> to ";
 
-	public void draw(PGraphics graphics, Game game, PVector dir, PVector plane, String action) {
+	public void draw(PGraphics g, Game game, PVector dir, PVector plane, String action) {
 		if (canvas == null) {
-			generateCanvas(graphics);
+			generateCanvas(g);
 		}
 		List<PImage> tileTextures = game.getLevel().getLevelTextures().stream().map((s) -> Assets.getTex(s))
 				.collect(Collectors.toList());
 
 		// Draw depth buffer
 		if (depthg == null) {
-			depthg = applet.createGraphics(graphics.width, graphics.height);
+			depthg = applet.createGraphics(g.width, g.height);
 		}
 		PVector pos = game.getPlayer().getPosition();
 
@@ -55,19 +55,19 @@ public class RaycastingRenderer {
 		raycastingShader.set("tile2", tileTextures.get(2));
 		raycastingShader.set("tile3", tileTextures.get(3));
 		raycastingShader.set("renderDistance", MAX_SPRITE_DRAW_DISTANCE);
-		raycastingShader.set("screenSize", (float) graphics.width, (float) graphics.height);
+		raycastingShader.set("screenSize", (float) g.width, (float) g.height);
 
 		// Draw map
-		graphics.background(0);
+		g.background(0);
 
 		canvas.setTexture(game.getLevelImage(applet));
-		graphics.shader(raycastingShader);
-		graphics.shape(canvas, 0, 0);
+		g.shader(raycastingShader);
+		g.shape(canvas, 0, 0);
 
-		graphics.resetShader();
+		g.resetShader();
 
 		// Draw entities
-		graphics.shader(spriteShader);
+		g.shader(spriteShader);
 		spriteShader.set("renderDistance", MAX_SPRITE_DRAW_DISTANCE);
 		List<Sprite> sprites = game.getState() == GameState.BATTLE ? Arrays.asList(game.getEnemy()) : game.getSprites();
 		for (Sprite s : sprites) {
@@ -78,7 +78,7 @@ public class RaycastingRenderer {
 					Arrays.asList(new PVector(0, 0), new PVector(0, 1), new PVector(1, 1), new PVector(1, 0)));
 			PVector dist = PVector.sub(s.getPosition(), game.getPlayer().getPosition());
 			float theta = game.getPlayer().getRotation();
-			PShape spriteShape = graphics.createShape();
+			PShape spriteShape = g.createShape();
 			spriteShape.beginShape();
 			float depth = -PVector.dot(dist, PVector.div(dir, dir.mag()));
 			float fovCot = new PVector(plane.x, plane.y).mag() / dir.mag();
@@ -89,9 +89,9 @@ public class RaycastingRenderer {
 				v.add(new PVector(dist.x, dist.z, dist.y));
 				v = rotateY(v, -theta);
 				depth = v.z;
-				v = new PVector(v.x / (fovCot * depth * graphics.width / graphics.height), v.y / (fovCot * depth), 0);
-				v = new PVector(v.x * graphics.width, -v.y * graphics.height);
-				v.add(graphics.width / 2, graphics.height / 2);
+				v = new PVector(v.x / (fovCot * depth * g.width / g.height), v.y / (fovCot * depth), 0);
+				v = new PVector(v.x * g.width, -v.y * g.height);
+				v.add(g.width / 2, g.height / 2);
 				spriteShape.vertex(v.x, v.y, vt.x, vt.y);
 			}
 			if (s.getImage() != null) {
@@ -104,14 +104,14 @@ public class RaycastingRenderer {
 				continue;
 			}
 
-			graphics.shape(spriteShape);
+			g.shape(spriteShape);
 		}
-		graphics.resetShader();
+		g.resetShader();
 
 		// Draw messages
-		displayMessages(graphics);
+		displayMessages(g);
 		if (action != null) {
-			displayInteractionMessage(graphics, action);
+			displayInteractionMessage(g, action);
 		}
 	}
 
@@ -153,6 +153,7 @@ public class RaycastingRenderer {
 				return;
 			}
 		}
+		onTopShader.set("usingTexture", true);
 		g.shader(onTopShader);
 		String msg = messageQueue.peekFirst();
 		g.pushStyle();
@@ -168,6 +169,7 @@ public class RaycastingRenderer {
 	private void displayInteractionMessage(PGraphics g, String action) {
 		String msg = INTERACT_MSG + action;
 
+		onTopShader.set("usingTexture", true);
 		g.shader(onTopShader);
 		g.pushStyle();
 		g.fill(0xffffffff);

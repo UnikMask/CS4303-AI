@@ -8,7 +8,8 @@ import processing.core.PVector;
 
 public class Button {
 	// Constants
-	private static final ButtonStyle DEFAULT_STYLE = new ButtonStyle(0xc8, 0x1c, 0x20, 0xff, 0x00, 0x00);
+	private static final ButtonStyle DEFAULT_STYLE = new ButtonStyle(0xffc8c8c8, 0xff2e2a2b, 0xff202020, 0xffe9d49c,
+			0x00, 0x00);
 	private static final float ANIM_LERP_COEFF = 0.2f;
 
 	// Attributes
@@ -46,23 +47,19 @@ public class Button {
 	 */
 	public void draw(PGraphics g, PVector rMousePos, PVector screenBounds) {
 		if (isHovered(scaleMousePosition(rMousePos, screenBounds))) {
-			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, style.hoveredBgColor, ANIM_LERP_COEFF),
-					(int) PApplet.lerp(currentColours.b, style.hoveredFgColor, ANIM_LERP_COEFF));
+			currentColours = new IntTuple((int) g.lerpColor(currentColours.a, style.hoveredBgColor, ANIM_LERP_COEFF),
+					(int) g.lerpColor(currentColours.b, style.hoveredFgColor, ANIM_LERP_COEFF));
 		} else {
-			currentColours = new IntTuple((int) PApplet.lerp(currentColours.a, style.normalBgColor, ANIM_LERP_COEFF),
-					(int) PApplet.lerp(currentColours.b, style.normalFgColor, ANIM_LERP_COEFF));
+			currentColours = new IntTuple((int) g.lerpColor(currentColours.a, style.normalBgColor, ANIM_LERP_COEFF),
+					(int) g.lerpColor(currentColours.b, style.normalFgColor, ANIM_LERP_COEFF));
 		}
 
-		// Draw button shape
-		if (shape == null) {
-			shape = g.createShape(PConstants.RECT, 0, 0, size.x * g.width, size.y * g.height);
-		}
 		g.pushStyle();
+		g.fill(g.color(currentColours.a));
 		if (style.strokeSize == 0) {
 			g.noStroke();
 		}
-		shape.setFill(g.color(currentColours.a));
-		g.shape(shape, position.x * g.width, position.y * g.height);
+		g.rect(position.x * g.width, position.y * g.height, size.x * g.width, size.y * g.height);
 		g.popStyle();
 
 		// Draw button text

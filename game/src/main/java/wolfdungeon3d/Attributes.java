@@ -49,6 +49,10 @@ public class Attributes {
 		return attrs;
 	}
 
+	public static Attributes getDefaultPlayerAttributes() {
+		return new Attributes(3, 3, 3, 1, 3, 3);
+	}
+
 	//////////////////
 	// Constructors //
 	//////////////////
