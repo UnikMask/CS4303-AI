@@ -124,7 +124,7 @@ public class Entity implements Sprite {
 
 	public float getDamage() {
 		return Math.max(BASE_ENTITY_DMG, weapon != null ? weapon.getDamage() : 0)
-				+ (DMG_PER_STR * level * (weapon != null ? weapon.getDamageScale() : 1));
+				+ (DMG_PER_STR * attributes.strength * (weapon != null ? weapon.getDamageScale() : 1));
 	}
 
 	public float getResistance() {

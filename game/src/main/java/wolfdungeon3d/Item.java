@@ -16,6 +16,10 @@ public class Item {
 		return false;
 	}
 
+	public boolean isMagic() {
+		return false;
+	}
+
 	public boolean isSellable() {
 		return price != null;
 	}

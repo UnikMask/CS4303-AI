@@ -20,19 +20,31 @@ import wolfdungeon3d.Level.EntityBehaviour;
 import wolfdungeon3d.Level.Tile;
 
 public class Game {
+	// Level Constants
 	private static final PVector BASE_FLOOR_SIZE = new PVector(25, 25);
 	private static final PVector FLOOR_SIZE_INCREMENT = new PVector(2, 2);
+
+	// Physics Constants
 	private static final float DIR_L = 0.2f;
 	private static final float MAX_V = 3.0f;
+
+	// Color Constants
 	private static final int HUD_BG = 0xff2e2a2b;
 	private static final int HUD_FG = 0xffe9d49c;
 	private static final int HUD_STROKE_C = 0xff584c4c;
 	private static final float HUD_STROKE_S = 0.025f;
+
+	// Battle Constants
 	private static final float MIN_BATTLE_DIST = 1f;
+
+	// HUD Constants
 	private static final float HUD_EXPLORE_LEFT_ANCHOR_W = 0.1f;
 	private static final float HUD_EXPLORE_RIGHT_ANCHOR_W = 0.9f;
 	private static final float HUD_COMBAT_LEFT_ANCHOR_W = 0.03f;
 	private static final float HUD_COMBAT_RIGHT_ANCHOR_W = 0.97f;
+
+	// Inventory Constants
+	private static final IntTuple INVENTORY_SIZE = new IntTuple(5, 2);
 
 	private GLWindow nativew;
 	private PApplet applet;
@@ -54,11 +66,15 @@ public class Game {
 	private CombatCommand nextPlayerCommand = null;
 	private CombatDialogBox playerCombatDialog;
 
+	// Invenotyr variables
+	private Inventory inventory;
+	private InventoryPage page;
+
 	// Mouse handling
 	private PVector mouseMovement = new PVector();
 
 	static enum GameState {
-		EXPLORE, BATTLE, LOADING, END
+		EXPLORE, BATTLE, LOADING, INVENTORY, END
 	}
 
 	/////////////////////////
@@ -111,6 +127,7 @@ public class Game {
 		if (player == null) {
 			player = new Entity("You", lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
 					Attributes.getDefaultPlayerAttributes());
+			inventory = new Inventory(INVENTORY_SIZE.a, INVENTORY_SIZE.b);
 			controller = new PlayerController(player, this, new InputSettings());
 		} else {
 			player.setPosition(lvl.getStartPosition());
@@ -364,13 +381,19 @@ public class Game {
 	///////////////
 
 	public void draw(PGraphics main, PGraphics hud) {
-		if (state == GameState.EXPLORE || state == GameState.BATTLE) {
+		switch (state) {
+		case EXPLORE:
+		case BATTLE:
 			renderHUD();
 			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
 			PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
 			if (plane != null) {
 				renderer.draw(main, this, dir, plane, action);
 			}
+			break;
+		case INVENTORY:
+			break;
+		default:
 		}
 	}
 
@@ -405,14 +428,16 @@ public class Game {
 		applet.fill(HUD_FG);
 		applet.textSize((applet.height * realSize.y) / 4);
 
-		// Print text
+		// Define text
 		float leftAnchor = state == GameState.BATTLE ? HUD_COMBAT_LEFT_ANCHOR_W : HUD_EXPLORE_LEFT_ANCHOR_W;
 		float rightAnchor = state == GameState.BATTLE ? HUD_COMBAT_RIGHT_ANCHOR_W : HUD_EXPLORE_RIGHT_ANCHOR_W;
-		String hpText = "HP: " + (player.getHP() * 100 / player.getMaxHP()) + "%";
+		String hpText = "HP: " + String.format("%.0f", Math.max(0, player.getHP()) * 100 / player.getMaxHP()) + "%";
 		String scoreText = "Score: " + score;
 		String floorText = "Floor: " + floor;
 		String levelText = "Level: " + player.getLevel();
 		String xpText = "XP: " + player.getXP() + "/" + player.XPToNextLevel();
+
+		// Print text
 		applet.textAlign(PConstants.LEFT, PConstants.CENTER);
 		applet.text(hpText, leftAnchor * applet.width, (0.25f * realSize.y + hudPosition.y) * applet.height);
 		applet.text(floorText, leftAnchor * applet.width, (0.75f * realSize.y + hudPosition.y) * applet.height);
@@ -423,6 +448,31 @@ public class Game {
 		applet.text(xpText, rightAnchor * applet.width, (0.8f * realSize.y + hudPosition.y) * applet.height);
 		applet.popStyle();
 
+		// Print Center emblem
+		float emblemSize = 0.2f * applet.height;
+		applet.pushStyle();
+		applet.fill(0xff292223);
+		applet.stroke(HUD_STROKE_C);
+		applet.strokeWeight(0.01f * applet.height);
+		applet.rect(0.5f * applet.width - emblemSize / 2, 0.8f * applet.height, emblemSize, emblemSize);
+		applet.popStyle();
+
+		// If battle mode is on, print enemy info in the middle
+		if (state == GameState.BATTLE) {
+			String enemyHpText = "HP: " + String.format("%.0f", Math.max(0, enemy.getHP()) * 100 / enemy.getMaxHP())
+					+ "%";
+			applet.pushStyle();
+			applet.fill(HUD_FG);
+			applet.textAlign(PConstants.CENTER, PConstants.CENTER);
+			applet.textFont(Assets.getFont("FFFFORWA.TTF"));
+			applet.textSize((applet.height * realSize.y) / 10);
+			applet.text("Enemy: ", 0.5f * applet.width, (0.2f * realSize.y + hudPosition.y) * applet.height);
+			applet.text(enemy.getName(), 0.5f * applet.width, (0.5f * realSize.y + hudPosition.y) * applet.height);
+			applet.text(enemyHpText, 0.5f * applet.width, (0.8f * realSize.y + hudPosition.y) * applet.height);
+			applet.popStyle();
+		}
+
+		// Print combat dialog if it is required
 		if (playerCombatDialog != null) {
 			playerCombatDialog.draw(applet.getGraphics(), new PVector(applet.mouseX, applet.mouseY),
 					new PVector(applet.width, applet.height));
