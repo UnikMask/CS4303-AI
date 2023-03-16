@@ -1,9 +1,7 @@
 package wolfdungeon3d;
 
-import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
-import processing.core.PShape;
 import processing.core.PVector;
 
 public class Button {
@@ -13,7 +11,6 @@ public class Button {
 	private static final float ANIM_LERP_COEFF = 0.2f;
 
 	// Attributes
-	private PShape shape;
 	private String text;
 	private PVector size;
 	private PVector position;

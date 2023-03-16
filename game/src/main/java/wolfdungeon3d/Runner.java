@@ -10,6 +10,7 @@ import com.jogamp.newt.opengl.GLWindow;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
+import wolfdungeon3d.Game.GameState;
 
 public class Runner extends PApplet {
 	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
@@ -46,10 +47,15 @@ public class Runner extends PApplet {
 			if (game == null) {
 				game = new Game(this, (GLWindow) surface.getNative());
 			} else {
-				for (Character k : heldKeys) {
-					game.keyHeld(k);
+				if (game.getState() != GameState.END) {
+					for (Character k : heldKeys) {
+						game.keyHeld(k);
+					}
+					game.update();
+				} else {
+					state = RunnerState.MENU;
+					game = null;
 				}
-				game.update();
 			}
 			break;
 		default:
@@ -83,6 +89,11 @@ public class Runner extends PApplet {
 		switch (state) {
 		case MENU:
 			mainMenu.handleOnClick(new PVector(mouseX, mouseY), new PVector(width, height));
+			break;
+		case GAME:
+			if (game != null) {
+				game.onClick();
+			}
 		default:
 		}
 	}

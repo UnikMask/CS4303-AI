@@ -68,7 +68,7 @@ public class Entity implements Sprite {
 	public int addXP(Entity e) {
 		int extraXp = e.level * XP_PER_LEVEL;
 		xp += extraXp;
-		while (xp / XPToNextLevel() > 1) {
+		while (xp / XPToNextLevel() >= 1) {
 			xp -= XPToNextLevel();
 			level++;
 		}
@@ -93,6 +93,10 @@ public class Entity implements Sprite {
 
 	public int getLevel() {
 		return level;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	@Override
@@ -134,6 +138,7 @@ public class Entity implements Sprite {
 	public Entity(String name, PVector position, PVector size, PImage tex, Attributes attr) {
 		this.position = position;
 		this.size = size;
+		this.name = name;
 		this.tex = tex;
 		this.attributes = attr;
 		this.affectAttributes = attr.copy();

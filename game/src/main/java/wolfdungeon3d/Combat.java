@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class Combat {
 
 	private ArrayList<Entity> turnOrder;
 	private Iterator<Entity> turnCursor;
+	private ArrayList<Entity> killedEntities = new ArrayList<>();
 	private Entity currentEntity = null;
 	private boolean ended = false;
 
@@ -45,8 +47,16 @@ public class Combat {
 		return currentEntity;
 	}
 
+	public Set<Entity> getEnemies(Entity e) {
+		return lhs.contains(e) ? rhs : rhs.contains(e) ? lhs : new HashSet<>(Set.of());
+	}
+
 	public Set<Entity> getAllies(Entity e) {
-		return lhs.contains(e) ? rhs : rhs.contains(e) ? lhs : Set.of();
+		return lhs.contains(e) ? lhs : rhs.contains(e) ? rhs : new HashSet<>(Set.of());
+	}
+
+	public ArrayList<Entity> getDefeatedEntities() {
+		return killedEntities;
 	}
 
 	///////////////////////////
@@ -54,33 +64,27 @@ public class Combat {
 	///////////////////////////
 
 	public void nextCommand(CombatCommand command) {
-		boolean isLhs = lhs.contains(currentEntity);
+		if (ended) {
+			return;
+		}
+		Entity caster = currentEntity;
+		System.out.println("Caster is " + caster.getName());
 
 		switch (command.getCommandType()) {
 		case ATTACK:
 			AttackCommand ac = (AttackCommand) command;
 			Entity target = ac.getTarget();
-			Set<Entity> side = getAllies(target);
 			float damage = ac.getDamage();
 			if (defenses.containsKey(target)) {
 				damage = defenses.get(target).apply(damage);
 			}
 			float takenDmg = target.takeDamage(damage);
-			messages.addLast((isLhs ? "Creature " : "You ") + "hit " + (isLhs ? "you " : "creature ") + "for "
-					+ takenDmg + " damage!");
-			if (target.getHP() <= 0) {
-				messages.addLast((isLhs ? "You " : "Creature ") + "died!");
-				side.remove(target);
-				for (Entity e : getAllies(currentEntity)) {
-					int newXP = e.addXP(target);
-					messages.addLast((isLhs ? "Creature " : "You ") + "get " + newXP + " experience points!");
-				}
-			}
+			messages.addLast(caster.getName() + " hit " + target.getName() + " for " + takenDmg + " damage!");
 			break;
 		case DEFEND:
 			DefendCommand dc = (DefendCommand) command;
 			defenses.put(currentEntity, dc.getDefenseEffect());
-			messages.add((isLhs ? "Creature " : "You ") + "defended " + (isLhs ? "itself!" : "yourself!"));
+			messages.add(caster.getName() + " defended! ");
 			break;
 		case FLEE:
 			break;
@@ -89,12 +93,14 @@ public class Combat {
 
 		// End the round.
 		endRound(currentEntity);
-		do {
-			if (!turnCursor.hasNext()) {
-				turnCursor = turnOrder.iterator();
-			}
-			currentEntity = turnCursor.next();
-		} while (currentEntity.getHP() <= 0);
+		if (!hasEnded()) {
+			do {
+				if (!turnCursor.hasNext()) {
+					turnCursor = turnOrder.iterator();
+				}
+				currentEntity = turnCursor.next();
+			} while (currentEntity.getHP() <= 0);
+		}
 	}
 
 	private void endRound(Entity e) {
@@ -102,7 +108,8 @@ public class Combat {
 		if (defenses.containsKey(e)) {
 			defenses.remove(e);
 		}
-		currentEntity.resetEffects();
+
+		e.resetEffects();
 		ArrayList<Function<Entity, Integer>> removals = new ArrayList<>();
 		for (Function<Entity, Integer> effect : buffs.get(e).keySet()) {
 			effect.apply(e);
@@ -114,7 +121,29 @@ public class Combat {
 		for (Function<Entity, Integer> effect : removals) {
 			buffs.get(e).remove(effect);
 		}
+
+		// Check for creatures that were killed.
+		Set<Entity> set = new HashSet<>(lhs);
+		set.addAll(rhs);
+		for (Entity en : set) {
+			if (en.getHP() <= 0) {
+				messages.addLast(en.getName() + " died!");
+				for (Entity enemy : getEnemies(en)) {
+					int prevLvl = enemy.getLevel();
+					int newXP = enemy.addXP(en);
+					messages.addLast(enemy.getName() + " get " + newXP + " experience points!");
+					if (enemy.getLevel() != prevLvl) {
+						messages.addLast(enemy.getName() + " levelled up!");
+					}
+				}
+				getAllies(en).remove(en);
+				killedEntities.add(en);
+			}
+		}
+
 		if (lhs.isEmpty() || rhs.isEmpty()) {
+			System.out.println("Combat has ended!");
+			messages.addLast("Combat has ended!");
 			ended = true;
 		}
 	}
@@ -149,8 +178,8 @@ public class Combat {
 	 * @param rhs The right hand side of the combat - the enemies
 	 */
 	public Combat(Set<Entity> lhs, Set<Entity> rhs) {
-		this.lhs = lhs;
-		this.rhs = rhs;
+		this.lhs = new HashSet<>(lhs);
+		this.rhs = new HashSet<>(rhs);
 		this.initiativeSeed = new Date().getTime();
 		setUpBattle();
 	}

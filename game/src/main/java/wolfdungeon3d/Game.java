@@ -58,7 +58,7 @@ public class Game {
 	private PVector mouseMovement = new PVector();
 
 	static enum GameState {
-		EXPLORE, BATTLE, LOADING
+		EXPLORE, BATTLE, LOADING, END
 	}
 
 	/////////////////////////
@@ -165,6 +165,7 @@ public class Game {
 			break;
 		case BATTLE:
 			combatLogic();
+		default:
 			break;
 		}
 		confineMouseMovement();
@@ -271,29 +272,46 @@ public class Game {
 	private void combatLogic() {
 		if (combatInstance == null) {
 			combatInstance = new Combat(Set.of(player), Set.of(enemy));
-		} else {
-			PVector dir = PVector.sub(player.getPosition(), enemy.getPosition());
-			player.setRotation(dir.heading() + (float) Math.PI / 2);
+			return;
+		}
+		PVector dir = PVector.sub(player.getPosition(), enemy.getPosition());
+		player.setRotation(dir.heading() + (float) Math.PI / 2);
 
-			// Combat Logic -
-			if (combatInstance.hasMessages()) {
-				playerCombatDialog = null;
-				if (!renderer.hasMessages()) {
-					renderer.addMessage(combatInstance.getNewMessage());
+		// Combat Logic -
+		if (combatInstance.hasMessages()) {
+			playerCombatDialog = null;
+			if (!renderer.hasMessages()) {
+				renderer.addMessage(combatInstance.getNewMessage());
+			}
+		} else if (combatInstance.hasEnded()) {
+			for (Entity e : combatInstance.getDefeatedEntities()) {
+				if (entityControllerMap.containsKey(e)) {
+					entityControllerMap.remove(e);
+				}
+				if (e == player) {
+					state = GameState.END;
+					return;
+				}
+			}
+
+			// Wrap up battle
+			combatInstance = null;
+			enemy = null;
+			state = GameState.EXPLORE;
+		} else {
+			Entity e = combatInstance.getCurrentEntity();
+			if (e == player) {
+				if (nextPlayerCommand != null) {
+					System.out.println("Next player command found! Sending to combat instance...");
+					combatInstance.nextCommand(nextPlayerCommand);
+					nextPlayerCommand = null;
+				} else if (playerCombatDialog == null) {
+					System.out.println("Player attacked and dialog null! Creating...");
+					playerCombatDialog = new CombatDialogBox(player, this);
 				}
 			} else {
-				Entity e = combatInstance.getCurrentEntity();
-				if (e == player) {
-					if (nextPlayerCommand != null) {
-						combatInstance.nextCommand(nextPlayerCommand);
-						nextPlayerCommand = null;
-					} else if (playerCombatDialog == null) {
-						playerCombatDialog = new CombatDialogBox(e, this);
-					}
-				} else {
-					playerCombatDialog = null;
-					combatInstance.nextCommand(entityControllerMap.get(e).getCombatTurn(combatInstance));
-				}
+				playerCombatDialog = null;
+				combatInstance.nextCommand(entityControllerMap.get(e).getCombatTurn(combatInstance));
 			}
 		}
 	}
@@ -333,16 +351,26 @@ public class Game {
 		}
 	}
 
+	public void onClick() {
+		if (state == GameState.BATTLE && playerCombatDialog != null) {
+			playerCombatDialog.onClick(new PVector(applet.mouseX, applet.mouseY),
+					new PVector(applet.width, applet.height));
+			playerCombatDialog = null;
+		}
+	}
+
 	///////////////
 	// Rendering //
 	///////////////
 
 	public void draw(PGraphics main, PGraphics hud) {
-		renderHUD();
-		PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
-		PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
-		if (plane != null) {
-			renderer.draw(main, this, dir, plane, action);
+		if (state == GameState.EXPLORE || state == GameState.BATTLE) {
+			renderHUD();
+			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
+			PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
+			if (plane != null) {
+				renderer.draw(main, this, dir, plane, action);
+			}
 		}
 	}
 
