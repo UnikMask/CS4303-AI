@@ -10,6 +10,10 @@ public class Attributes {
 	int focus = 1;
 	int intellect = 1;
 
+	////////////////////
+	// Public Methods //
+	////////////////////
+
 	public Attributes copy() {
 		return new Attributes(strength, endurance, dexterity, luck, focus, intellect);
 	}

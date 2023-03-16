@@ -2,6 +2,7 @@ package wolfdungeon3d;
 
 public class Weapon extends Item {
 	private float damage;
+	private float damageScale;
 	private int cooldown;
 	private boolean isRanged;
 
@@ -11,6 +12,10 @@ public class Weapon extends Item {
 
 	public float getDamage() {
 		return damage;
+	}
+
+	public float getDamageScale() {
+		return damageScale;
 	}
 
 	public void setDamage(float damage) {
@@ -36,6 +41,7 @@ public class Weapon extends Item {
 	public Weapon(String name, Integer price, float damage, int cooldown, boolean isRanged) {
 		super(name, price);
 		this.damage = damage;
+		this.damageScale = damage / 5.0f;
 		this.cooldown = cooldown;
 		this.isRanged = isRanged;
 	}

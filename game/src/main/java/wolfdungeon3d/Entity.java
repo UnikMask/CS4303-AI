@@ -11,6 +11,9 @@ public class Entity implements Sprite {
 	private static final float HP_PER_LEVEL = 5;
 	private static final int XP_BASE = 128;
 	private static final int XP_PER_LEVEL = 32;
+	private static final float BASE_ENTITY_DMG = 5.0f;
+	private static final float DMG_PER_STR = 1;
+	private static final float BASE_RES = 2;
 
 	private String name;
 	private PImage tex;
@@ -22,6 +25,9 @@ public class Entity implements Sprite {
 	private int xp = 0;
 	private boolean hostile = false;
 	private PVector size;
+
+	private Weapon weapon;
+	private Armor armor;
 	Attributes attributes;
 	Attributes affectAttributes;
 
@@ -99,9 +105,30 @@ public class Entity implements Sprite {
 		return name;
 	}
 
+	public Weapon getWeapon() {
+		return weapon;
+	}
+
+	public Armor getArmor() {
+		return armor;
+	}
+
 	@Override
 	public PVector getSize() {
 		return size;
+	}
+
+	////////////////////
+	// Combat Methods //
+	////////////////////
+
+	public float getDamage() {
+		return Math.max(BASE_ENTITY_DMG, weapon != null ? weapon.getDamage() : 0)
+				+ (DMG_PER_STR * level * (weapon != null ? weapon.getDamageScale() : 1));
+	}
+
+	public float getResistance() {
+		return Math.max(BASE_RES, armor != null ? armor.getRes() : 0) * (1 + ((float) attributes.endurance)) / 5.0f;
 	}
 
 	////////////////////

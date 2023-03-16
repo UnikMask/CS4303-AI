@@ -101,7 +101,7 @@ public class ComputerController implements EntityController {
 	}
 
 	public CombatCommand getCombatTurn(Combat combat) {
-		return new AttackCommand("attack", 10, game.getPlayer(), (e) -> 0);
+		return new AttackCommand("attack", e.getDamage(), game.getPlayer(), (e) -> 0);
 	}
 
 	/////////////////////

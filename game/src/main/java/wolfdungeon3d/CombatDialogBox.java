@@ -48,13 +48,16 @@ public class CombatDialogBox {
 		this.attackButton = new Button("Attack", new PVector(0.15f, 0.08f), new PVector(0.25f, 0.81f),
 				new EventCallback() {
 					public void call() {
-						game.setNextPlayerCommand(new AttackCommand("attack", 10, game.getEnemy(), (e) -> 0));
+						game.setNextPlayerCommand(
+								new AttackCommand("attack", e.getDamage(), game.getEnemy(), (e) -> 0));
 					}
 				});
 		this.defendButton = new Button("Defend", new PVector(0.15f, 0.08f), new PVector(0.25f, 0.91f),
 				new EventCallback() {
 					public void call() {
-						game.setNextPlayerCommand(new DefendCommand("defend", (e) -> 0, (f) -> f / 2.0f));
+						game.setNextPlayerCommand(new DefendCommand("defend", (e) -> 0, (f) -> {
+							return f / e.getResistance();
+						}));
 					}
 				});
 		this.fleeButton = new Button("Flee", new PVector(0.15f, 0.08f), new PVector(0.6f, 0.81f), new EventCallback() {

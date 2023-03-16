@@ -67,9 +67,6 @@ public class Combat {
 		if (ended) {
 			return;
 		}
-		Entity caster = currentEntity;
-		System.out.println("Caster is " + caster.getName());
-
 		switch (command.getCommandType()) {
 		case ATTACK:
 			AttackCommand ac = (AttackCommand) command;
@@ -77,14 +74,15 @@ public class Combat {
 			float damage = ac.getDamage();
 			if (defenses.containsKey(target)) {
 				damage = defenses.get(target).apply(damage);
+				System.out.println("defenses applied to target - damage fell to " + damage);
 			}
 			float takenDmg = target.takeDamage(damage);
-			messages.addLast(caster.getName() + " hit " + target.getName() + " for " + takenDmg + " damage!");
+			messages.addLast(currentEntity.getName() + " hit " + target.getName() + " for " + takenDmg + " damage!");
 			break;
 		case DEFEND:
 			DefendCommand dc = (DefendCommand) command;
 			defenses.put(currentEntity, dc.getDefenseEffect());
-			messages.add(caster.getName() + " defended! ");
+			messages.add(currentEntity.getName() + " defended! ");
 			break;
 		case FLEE:
 			break;
@@ -101,13 +99,14 @@ public class Combat {
 				currentEntity = turnCursor.next();
 			} while (currentEntity.getHP() <= 0);
 		}
+
+		// Update components of the current entity in the combat for its own turn.
+		if (defenses.containsKey(currentEntity)) {
+			defenses.remove(currentEntity);
+		}
 	}
 
 	private void endRound(Entity e) {
-		// Update components of the current entity in the combat for its own turn.
-		if (defenses.containsKey(e)) {
-			defenses.remove(e);
-		}
 
 		e.resetEffects();
 		ArrayList<Function<Entity, Integer>> removals = new ArrayList<>();
@@ -142,8 +141,6 @@ public class Combat {
 		}
 
 		if (lhs.isEmpty() || rhs.isEmpty()) {
-			System.out.println("Combat has ended!");
-			messages.addLast("Combat has ended!");
 			ended = true;
 		}
 	}
