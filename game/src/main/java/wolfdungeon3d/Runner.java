@@ -13,11 +13,8 @@ import processing.core.PVector;
 import wolfdungeon3d.Game.GameState;
 
 public class Runner extends PApplet {
-	static private final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
-	static private final PVector MAIN_CTX_POS = new PVector(0, 0);
 
 	// State Handling
-	PGraphics mainGraphicsCtx;
 	Game game;
 	RunnerState state = RunnerState.MENU;
 	MainMenu mainMenu;
@@ -104,7 +101,6 @@ public class Runner extends PApplet {
 
 	public void setup() {
 		frameRate(60);
-		mainGraphicsCtx = createGraphics(width, (int) ((float) height * MAIN_CTX_PERCENT.y), PApplet.P3D);
 		Assets.createInstance(this);
 		mainMenu = new MainMenu(this);
 	}
@@ -119,14 +115,8 @@ public class Runner extends PApplet {
 		background(0);
 		switch (state) {
 		case GAME:
-			if (game != null) {
-				mainGraphicsCtx.colorMode(PGraphics.ARGB);
-				mainGraphicsCtx.beginDraw();
-				mainGraphicsCtx.blendMode(PGraphics.BLEND);
-				game.draw(mainGraphicsCtx, this.getGraphics());
-				mainGraphicsCtx.endDraw();
-				image(mainGraphicsCtx, MAIN_CTX_POS.x, MAIN_CTX_POS.y);
-			}
+			if (game != null)
+				game.draw();
 			break;
 		case MENU:
 			mainMenu.draw(this, new PVector(mouseX, mouseY));

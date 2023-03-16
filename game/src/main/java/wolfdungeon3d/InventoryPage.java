@@ -124,6 +124,7 @@ public class InventoryPage {
 			}
 		}
 		this.entity = e;
+		this.cursor = new IntTuple(0, 0);
 		this.g = g;
 	}
 }

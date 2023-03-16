@@ -25,6 +25,8 @@ public class Game {
 	private static final PVector FLOOR_SIZE_INCREMENT = new PVector(2, 2);
 
 	// Physics Constants
+	private static final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
+	private static final PVector MAIN_CTX_POS = new PVector(0, 0);
 	private static final float DIR_L = 0.2f;
 	private static final float MAX_V = 3.0f;
 
@@ -48,6 +50,7 @@ public class Game {
 
 	private GLWindow nativew;
 	private PApplet applet;
+	private PGraphics main;
 	private GameState state = GameState.LOADING;
 	private Entity player;
 	private HashMap<Entity, EntityController> entityControllerMap;
@@ -182,6 +185,10 @@ public class Game {
 			break;
 		case BATTLE:
 			combatLogic();
+		case INVENTORY:
+			if (page == null) {
+				page = new InventoryPage(inventory, player, applet.getGraphics());
+			}
 		default:
 			break;
 		}
@@ -344,6 +351,9 @@ public class Game {
 		}
 		if (key == '\n') {
 			renderer.nextMessage();
+		} else if (key == 'i') {
+			state = state == GameState.EXPLORE ? GameState.INVENTORY
+					: state == GameState.INVENTORY ? GameState.EXPLORE : state;
 		}
 	}
 
@@ -380,18 +390,25 @@ public class Game {
 	// Rendering //
 	///////////////
 
-	public void draw(PGraphics main, PGraphics hud) {
+	public void draw() {
 		switch (state) {
 		case EXPLORE:
 		case BATTLE:
+			main.colorMode(PConstants.ARGB);
+			main.beginDraw();
 			renderHUD();
 			PVector dir = PVector.mult(PVector.fromAngle((float) Math.PI / 2 + player.getRotation()), DIR_L);
 			PVector plane = getPlane(dir, new PVector(main.width, main.height), (float) (Math.PI / 2f));
 			if (plane != null) {
 				renderer.draw(main, this, dir, plane, action);
 			}
+			main.endDraw();
+			applet.image(main, 0, 0);
 			break;
 		case INVENTORY:
+			if (page != null) {
+				page.draw();
+			}
 			break;
 		default:
 		}
@@ -485,6 +502,8 @@ public class Game {
 
 	public Game(PApplet applet, GLWindow nativew) {
 		this.applet = applet;
+		this.main = applet.createGraphics(applet.width, (int) ((float) applet.height * MAIN_CTX_PERCENT.y),
+				PConstants.P3D);
 		this.nativew = nativew;
 		renderer = new RaycastingRenderer(applet);
 		setUp();
