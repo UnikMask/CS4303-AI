@@ -345,15 +345,26 @@ public class Game {
 	////////////////////
 
 	public void keyPressed(Character key) {
-		controller.onKeyPressed(key);
-		for (EntityController c : entityControllerMap.values()) {
-			c.onKeyPressed(key);
-		}
-		if (key == '\n') {
-			renderer.nextMessage();
-		} else if (key == 'i') {
-			state = state == GameState.EXPLORE ? GameState.INVENTORY
-					: state == GameState.INVENTORY ? GameState.EXPLORE : state;
+		switch (state) {
+		case EXPLORE:
+			if (key == 'i' || key == 'I') {
+				state = GameState.INVENTORY;
+			} else {
+				controller.onKeyPressed(key);
+			}
+		case BATTLE:
+			if (key == '\n') {
+				renderer.nextMessage();
+			}
+			break;
+		case INVENTORY:
+			if (key == 'i' || key == 'I') {
+				state = GameState.EXPLORE;
+			} else {
+				page.keyPressed(key);
+			}
+			break;
+		default:
 		}
 	}
 

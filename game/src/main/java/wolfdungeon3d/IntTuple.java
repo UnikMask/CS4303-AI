@@ -14,7 +14,7 @@ public class IntTuple {
 	}
 
 	public static float awayBy(PVector pos, IntTuple target) {
-		PVector targetReal = new PVector(target.a, target.b);
+		PVector targetReal = new PVector(target.a + 0.5f, target.b + 0.5f);
 		return Math.abs(PVector.sub(pos, targetReal).mag());
 	}
 

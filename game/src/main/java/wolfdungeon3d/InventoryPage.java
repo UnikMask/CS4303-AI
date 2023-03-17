@@ -3,6 +3,7 @@ package wolfdungeon3d;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PVector;
+import wolfdungeon3d.InputSettings.Command;
 
 public class InventoryPage {
 	private static final int BG_LIGHT_C = 0xff403735;
@@ -22,6 +23,7 @@ public class InventoryPage {
 	private InventoryItem weaponSlot;
 	private InventoryItem armorSlot;
 	private InventoryItem magicSlot;
+	private InputSettings inputs = new InputSettings();
 
 	private IntTuple cursor;
 	private PGraphics g;
@@ -112,8 +114,37 @@ public class InventoryPage {
 		}
 	}
 
-	public void moveCursor(IntTuple dir) {
+	// Input Handling //
+	public void keyPressed(Character c) {
+		Command comm = inputs.getCommand(c);
+		switch (comm) {
+		case FORWARD:
+			moveCursor(new IntTuple(0, -1));
+			break;
+		case BACKWARD:
+			moveCursor(new IntTuple(0, 1));
+			break;
+		case LEFT:
+			moveCursor(new IntTuple(-1, 0));
+			break;
+		case RIGHT:
+			moveCursor(new IntTuple(1, 0));
+			break;
+		default:
+		}
 	}
+
+	public void moveCursor(IntTuple dir) {
+		if (cursor.b >= 0 && (cursor.b > 0 || dir.b >= 0) && (cursor.b < itemList.length - 1 || dir.b <= 0)) {
+			cursor = new IntTuple((itemList[0].length + cursor.a + dir.a) % itemList[0].length, cursor.b + dir.b);
+		} else if (cursor.b == -1) {
+			cursor = new IntTuple((3 + cursor.a + dir.a) % 3, cursor.b + Math.max(0, dir.b));
+		} else if (cursor.b == 0 && dir.b < 0) {
+			cursor = new IntTuple(0, -1);
+		}
+	}
+
+	// Rendering //
 
 	public void draw() {
 		// Draw background
