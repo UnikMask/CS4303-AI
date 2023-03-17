@@ -1,5 +1,6 @@
 package wolfdungeon3d;
 
+import java.util.Date;
 import java.util.Random;
 import java.util.stream.IntStream;
 
@@ -81,6 +82,7 @@ public class Entity implements Sprite {
 		while (xp / XPToNextLevel() >= 1) {
 			xp -= XPToNextLevel();
 			level++;
+			attributes.levelUp(new Random(new Date().getTime()));
 			hp = getMaxHP();
 		}
 		return extraXp;

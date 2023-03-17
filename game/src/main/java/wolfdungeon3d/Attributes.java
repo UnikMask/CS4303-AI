@@ -20,26 +20,30 @@ public class Attributes {
 
 	public void scale(int floor, Random randomizer) {
 		while (floor > 0) {
-			switch (Math.abs(randomizer.nextInt()) % 6) {
-			case 0:
-				strength++;
-				break;
-			case 1:
-				endurance++;
-				break;
-			case 2:
-				dexterity++;
-				break;
-			case 3:
-				luck++;
-				break;
-			case 4:
-				focus++;
-				break;
-			case 5:
-				intellect++;
-			}
+			levelUp(randomizer);
 			floor--;
+		}
+	}
+
+	public void levelUp(Random randomizer) {
+		switch (Math.abs(randomizer.nextInt()) % 6) {
+		case 0:
+			strength++;
+			break;
+		case 1:
+			endurance++;
+			break;
+		case 2:
+			dexterity++;
+			break;
+		case 3:
+			luck++;
+			break;
+		case 4:
+			focus++;
+			break;
+		case 5:
+			intellect++;
 		}
 	}
 
