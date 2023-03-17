@@ -19,7 +19,7 @@ public class Assets {
 
 	// Sprites
 	private static final List<String> spriteSrcs = Arrays.asList("sphere.png", "P_Red07.png", "W_Sword008.png",
-			"l_Chest01.png", "l_Chest02.png", "E_Wood03.png", "Ac_Ring02.png");
+			"I_Chest01.png", "I_Chest02.png", "E_Wood03.png", "Ac_Ring02.png");
 	public HashMap<String, PImage> spriteMap;
 
 	// Fonts
