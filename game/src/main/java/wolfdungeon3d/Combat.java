@@ -101,6 +101,7 @@ public class Combat {
 			messages.add(currentEntity.getName() + " defended! ");
 			break;
 		case FLEE:
+			ended = true;
 			break;
 		case CAST:
 		}
