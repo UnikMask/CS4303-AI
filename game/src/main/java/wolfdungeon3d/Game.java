@@ -129,7 +129,7 @@ public class Game {
 
 		if (player == null) {
 			player = new Entity("You", lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
-					Attributes.getDefaultPlayerAttributes());
+					Attributes.getDefaultPlayerAttributes(), 1);
 			inventory = new Inventory(INVENTORY_SIZE.a, INVENTORY_SIZE.b);
 			controller = new PlayerController(player, this, new InputSettings());
 		} else {

@@ -21,7 +21,7 @@ public class Entity implements Sprite {
 	private PVector velocity = new PVector();
 	private float direction = 0;
 	private float hp;
-	private int level = 1;
+	private int level;
 	private int xp = 0;
 	private boolean hostile = false;
 	private PVector size;
@@ -77,6 +77,7 @@ public class Entity implements Sprite {
 		while (xp / XPToNextLevel() >= 1) {
 			xp -= XPToNextLevel();
 			level++;
+			hp = getMaxHP();
 		}
 		return extraXp;
 	}
@@ -162,10 +163,11 @@ public class Entity implements Sprite {
 	// Constructors //
 	//////////////////
 
-	public Entity(String name, PVector position, PVector size, PImage tex, Attributes attr) {
+	public Entity(String name, PVector position, PVector size, PImage tex, Attributes attr, int lvl) {
 		this.position = position;
 		this.size = size;
 		this.name = name;
+		this.level = lvl;
 		this.tex = tex;
 		this.attributes = attr;
 		this.affectAttributes = attr.copy();

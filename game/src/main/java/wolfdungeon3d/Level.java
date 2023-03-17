@@ -352,7 +352,7 @@ public class Level {
 
 			behaviour.e = new Entity("Wolf Totem", PVector.add(behaviour.startPoint, new PVector(1, 1, 0.25f)),
 					new PVector(0.5f, 0.5f, 0.5f), Assets.getSprite(ENEMY_SPRITE),
-					Attributes.getRandomAttributes(floor, randomizer));
+					Attributes.getRandomAttributes(floor, randomizer), floor + 1);
 			behaviours.add(behaviour);
 		}
 	}
