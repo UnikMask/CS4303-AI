@@ -1,8 +1,14 @@
 package wolfdungeon3d;
 
-public class Item {
+import processing.core.PImage;
+import processing.core.PVector;
+
+public class Item implements Sprite {
+	private static final PVector ITEM_SIZE = new PVector(0.3f, 0.3f);
+	private static final float ITEM_Z_POS = 0f;
+	private String spriteFile;
+	private PVector position;
 	private String name;
-	private Integer price;
 
 	public String getName() {
 		return name;
@@ -20,16 +26,29 @@ public class Item {
 		return false;
 	}
 
-	public boolean isSellable() {
-		return price != null;
+	//////////////////////
+	// Inteface Methods //
+	//////////////////////
+
+	public PVector getSize() {
+		return ITEM_SIZE;
 	}
 
-	public int getPrice() {
-		return price;
+	public PVector getPosition() {
+		return new PVector(position.x, position.y, ITEM_Z_POS);
 	}
 
-	public Item(String name, Integer price) {
+	public PImage getImage() {
+		return Assets.getSprite(spriteFile);
+	}
+
+	public Item(String name, String sprite) {
+		this(name, sprite, null);
+	}
+
+	public Item(String name, String sprite, PVector position) {
 		this.name = name;
-		this.price = price;
+		this.position = position;
+		this.spriteFile = sprite;
 	}
 }

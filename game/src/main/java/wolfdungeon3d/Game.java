@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -26,7 +27,6 @@ public class Game {
 
 	// Physics Constants
 	private static final PVector MAIN_CTX_PERCENT = new PVector(1f, 0.8f);
-	private static final PVector MAIN_CTX_POS = new PVector(0, 0);
 	private static final float DIR_L = 0.2f;
 	private static final float MAX_V = 3.0f;
 
@@ -54,6 +54,7 @@ public class Game {
 	private GameState state = GameState.LOADING;
 	private Entity player;
 	private HashMap<Entity, EntityController> entityControllerMap;
+	private HashSet<Item> collectibles;
 	private String action = null;
 
 	private PlayerController controller;
@@ -69,7 +70,7 @@ public class Game {
 	private CombatCommand nextPlayerCommand = null;
 	private CombatDialogBox playerCombatDialog;
 
-	// Invenotyr variables
+	// Invenoty variables
 	private Inventory inventory;
 	private InventoryPage page;
 
@@ -101,7 +102,12 @@ public class Game {
 	}
 
 	public ArrayList<Sprite> getSprites() {
-		return new ArrayList<>(entityControllerMap.keySet());
+		return new ArrayList<>() {
+			{
+				addAll(entityControllerMap.keySet());
+				addAll(collectibles);
+			}
+		};
 	}
 
 	public Entity getEnemy() {
@@ -121,16 +127,17 @@ public class Game {
 	////////////
 
 	public void setUp() {
-		lvl = Level.generate(getLevelSize(floor), floor, new Date().getTime() + new Random(floor).nextInt());
+		lvl = Level.generate(getLevelSize(floor), floor, player != null ? player.getAttributes().luck : 1,
+				new Date().getTime() + new Random(floor).nextInt());
 		entityControllerMap = new HashMap<>();
 		for (EntityBehaviour b : lvl.getEntities()) {
 			entityControllerMap.put(b.e, new ComputerController(b, this));
 		}
+		collectibles = new HashSet<>(lvl.getCollectibleItems());
 
 		if (player == null) {
 			player = new Entity("You", lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
 					Attributes.getDefaultPlayerAttributes(), 1);
-			player.setWeapon(new Weapon("Weapon of the Wolf", 0, 30, 0, false));
 			inventory = new Inventory(INVENTORY_SIZE.a, INVENTORY_SIZE.b);
 			controller = new PlayerController(player, this, new InputSettings());
 		} else {

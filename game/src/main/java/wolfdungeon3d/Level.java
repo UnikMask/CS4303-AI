@@ -24,6 +24,7 @@ public class Level {
 	private int[][] grid;
 	private PVector startPosition;
 	private List<EntityBehaviour> behaviours;
+	private List<Item> items = new ArrayList<>();
 
 	// Enum for tiles - maps tile to number.
 	enum Tile {
@@ -93,6 +94,10 @@ public class Level {
 		return textures;
 	}
 
+	public List<Item> getCollectibleItems() {
+		return items;
+	}
+
 	//////////////////////
 	// Static Functions //
 	//////////////////////
@@ -145,7 +150,7 @@ public class Level {
 	 * @param floor The floor it is on. Affects mob difficulty.
 	 * @param seed  The random seed to use.
 	 */
-	public static Level generate(PVector size, int floor, long seed) {
+	public static Level generate(PVector size, int floor, int luck, long seed) {
 		Level ret = new Level(size);
 
 		Random rGenRandom = new Random(seed);
@@ -165,6 +170,9 @@ public class Level {
 		IntTuple endLocation = IntTuple.add(new IntTuple(endRoom.pos), new IntTuple(
 				rGenRandom.nextInt(0, (int) endRoom.size.x - 1), rGenRandom.nextInt(0, (int) endRoom.size.y - 1)));
 		ret.grid[endLocation.b][endLocation.a] = Tile.END.num;
+
+		// Generate items
+		ret.generateItems(rooms, floor, luck, endLocation, rGenRandom);
 		return ret;
 	}
 
@@ -354,6 +362,26 @@ public class Level {
 					new PVector(0.5f, 0.5f, 0.5f), Assets.getSprite(ENEMY_SPRITE),
 					Attributes.getRandomAttributes(floor, randomizer), floor + 1);
 			behaviours.add(behaviour);
+		}
+	}
+
+	private void generateItems(List<Room> rooms, int floor, int luck, IntTuple exitPosition, Random randomizer) {
+		for (Room room : rooms) {
+			float specialChance = randomizer.nextFloat();
+			if (specialChance > (float) luck / 10) {
+				PVector position = new PVector(room.pos.x + randomizer.nextInt(0, (int) room.size.x - 1) + 0.5f,
+						room.pos.y + randomizer.nextInt(0, (int) room.size.y - 1) + 0.5f);
+				switch (randomizer.nextInt(0, 2)) {
+				case 0: // Weapon
+					items.add(Weapon.getRandomWeapon(floor, luck, randomizer, position));
+					break;
+				case 1: // Armor
+					items.add(Armor.getRandomArmor(floor, luck, randomizer, position));
+					break;
+				// case 2: // Potion
+				// case 3: // Magic Item
+				}
+			}
 		}
 	}
 

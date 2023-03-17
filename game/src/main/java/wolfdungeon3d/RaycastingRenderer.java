@@ -92,7 +92,7 @@ public class RaycastingRenderer {
 				v = new PVector(v.x / (fovCot * depth * g.width / g.height), v.y / (fovCot * depth), 0);
 				v = new PVector(v.x * g.width, -v.y * g.height);
 				v.add(g.width / 2, g.height / 2);
-				spriteShape.vertex(v.x, v.y, vt.x, vt.y);
+				spriteShape.vertex(v.x, v.y, vt.x, 1 - vt.y);
 			}
 			if (s.getImage() != null) {
 				spriteShape.texture(s.getImage());
