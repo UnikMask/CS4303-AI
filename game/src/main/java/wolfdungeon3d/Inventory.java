@@ -29,6 +29,7 @@ public class Inventory {
 		for (int i = 0; i < itemGrid.length; i++) {
 			for (int j = 0; j < itemGrid[i].length; j++) {
 				if (itemGrid[i][j] == null) {
+					System.out.println("Added item at " + j + ", " + i);
 					itemGrid[i][j] = item;
 					return true;
 				}

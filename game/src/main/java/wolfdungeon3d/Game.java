@@ -54,7 +54,7 @@ public class Game {
 	private GameState state = GameState.LOADING;
 	private Entity player;
 	private HashMap<Entity, EntityController> entityControllerMap;
-	private HashSet<Item> collectibles;
+	private HashMap<IntTuple, Item> itemPositionsMap;
 	private String action = null;
 
 	private PlayerController controller;
@@ -105,7 +105,7 @@ public class Game {
 		return new ArrayList<>() {
 			{
 				addAll(entityControllerMap.keySet());
-				addAll(collectibles);
+				addAll(itemPositionsMap.values());
 			}
 		};
 	}
@@ -133,7 +133,10 @@ public class Game {
 		for (EntityBehaviour b : lvl.getEntities()) {
 			entityControllerMap.put(b.e, new ComputerController(b, this));
 		}
-		collectibles = new HashSet<>(lvl.getCollectibleItems());
+		itemPositionsMap = new HashMap<>();
+		for (Item i : lvl.getCollectibleItems()) {
+			itemPositionsMap.put(new IntTuple(i.getPosition()), i);
+		}
 
 		if (player == null) {
 			player = new Entity("You", lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
@@ -187,29 +190,35 @@ public class Game {
 			IntTuple playerPosition = new IntTuple(player.getPosition());
 			if (lvl.getTile(playerPosition.a, playerPosition.b) == Tile.END) {
 				action = "go to the next floor.";
+			} else if (itemPositionsMap.containsKey(playerPosition)) {
+				action = "collect " + itemPositionsMap.get(playerPosition).getName();
 			} else {
 				action = null;
 			}
 			break;
 		case BATTLE:
 			combatLogic();
-		case INVENTORY:
-			if (page == null) {
-				page = new InventoryPage(inventory, player, applet.getGraphics());
-			}
 		default:
 			break;
 		}
 		confineMouseMovement();
 	}
 
-	public void goToNextFloor() {
+	public void interact() {
 		if (state == GameState.EXPLORE) {
 			IntTuple playerPos = new IntTuple(player.getPosition());
 			if (lvl.getTile(playerPos.a, playerPos.b) == Tile.END) {
 				floor += 1;
 				state = GameState.LOADING;
 				lvl = null;
+			} else if (itemPositionsMap.containsKey(playerPos)) {
+				Item i = itemPositionsMap.get(playerPos);
+				if (inventory.add(i)) {
+					itemPositionsMap.remove(playerPos);
+					renderer.addMessage("Collected " + i.getName());
+				} else {
+					renderer.addMessage("Inventory is full!");
+				}
 			}
 		}
 	}
@@ -355,6 +364,7 @@ public class Game {
 		case EXPLORE:
 			if (key == 'i' || key == 'I') {
 				state = GameState.INVENTORY;
+				page = new InventoryPage(inventory, player, applet.getGraphics());
 			} else {
 				controller.onKeyPressed(key);
 			}

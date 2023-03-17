@@ -13,6 +13,11 @@ public class Armor extends Item {
 	Function<Entity, Integer> effects;
 	String effectType;
 
+	@Override
+	public boolean isArmor() {
+		return true;
+	}
+
 	public float getRes() {
 		return res;
 	}

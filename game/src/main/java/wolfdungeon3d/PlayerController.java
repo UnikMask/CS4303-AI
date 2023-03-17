@@ -18,7 +18,7 @@ public class PlayerController implements EntityController {
 	public void onKeyPressed(Character c) {
 		Command comm = inputs.getCommand(c);
 		if (comm == Command.INTERACT) {
-			game.goToNextFloor();
+			game.interact();
 		}
 	}
 
