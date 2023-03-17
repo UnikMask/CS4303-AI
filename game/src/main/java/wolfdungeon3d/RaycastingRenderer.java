@@ -3,6 +3,7 @@ package wolfdungeon3d;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,8 @@ public class RaycastingRenderer {
 	private final static float MAX_SPRITE_DRAW_DISTANCE = 24.0f;
 	private PApplet applet;
 	private PShape canvas;
+	private int lastFloor;
+	private PImage tex;
 	private PGraphics depthg;
 	private PShader raycastingShader;
 	private PShader spriteShader;
@@ -36,6 +39,10 @@ public class RaycastingRenderer {
 	public void draw(PGraphics g, Game game, PVector dir, PVector plane, String action) {
 		if (canvas == null) {
 			generateCanvas(g);
+		}
+		if (tex == null || game.getFloor() != lastFloor) {
+			tex = game.getLevelImage(applet);
+			lastFloor = game.getFloor();
 		}
 		List<PImage> tileTextures = game.getLevel().getLevelTextures().stream().map((s) -> Assets.getTex(s))
 				.collect(Collectors.toList());
@@ -60,7 +67,7 @@ public class RaycastingRenderer {
 		// Draw map
 		g.background(0);
 
-		canvas.setTexture(game.getLevelImage(applet));
+		canvas.setTexture(tex);
 		g.shader(raycastingShader);
 		g.shape(canvas, 0, 0);
 

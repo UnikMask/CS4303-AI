@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 public class DefendCommand extends CombatCommand {
 	private Function<Float, Float> defenseEffect;
+	String effectType;
 
 	public Function<Float, Float> getDefenseEffect() {
 		return defenseEffect;
@@ -13,9 +14,11 @@ public class DefendCommand extends CombatCommand {
 		return CommandType.DEFEND;
 	}
 
-	public DefendCommand(String name, Function<Entity, Integer> effect, Function<Float, Float> defenseEffect) {
+	public DefendCommand(String name, Function<Entity, Integer> effect, Function<Float, Float> defenseEffect,
+			String effectType) {
 		this.name = name;
 		this.effect = effect;
+		this.effectType = effectType;
 		this.defenseEffect = defenseEffect;
 	}
 }

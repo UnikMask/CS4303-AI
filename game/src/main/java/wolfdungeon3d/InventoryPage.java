@@ -25,7 +25,6 @@ public class InventoryPage {
 	private InventoryItem bin;
 	private InventoryItem weaponSlot;
 	private InventoryItem armorSlot;
-	private InventoryItem magicSlot;
 
 	private Inventory inventory;
 	private InputSettings inputs = new InputSettings();
@@ -40,7 +39,7 @@ public class InventoryPage {
 	}
 
 	enum ItemKind {
-		ALL, WEAPON, ARMOR, MAGIC, BIN
+		ALL, WEAPON, ARMOR, CONSUMABLE, BIN
 	}
 
 	class InventoryItem {
@@ -49,7 +48,7 @@ public class InventoryPage {
 		private final static int MISC_C = FG_C;
 		private final static int WEAPON_C = 0xffc22211;
 		private final static int ARMOR_C = 0xff9eb185;
-		private final static int MAGIC_C = 0xffff771c;
+		private final static int CONSUMABLE_C = 0xffff771c;
 
 		IntTuple position;
 		Item item;
@@ -68,8 +67,8 @@ public class InventoryPage {
 			case ARMOR:
 				accepts = newItem.isArmor();
 				break;
-			case MAGIC:
-				accepts = newItem.isMagic();
+			case CONSUMABLE:
+				accepts = newItem.isConsumable();
 			}
 			if (accepts) {
 				item = newItem;
@@ -106,7 +105,8 @@ public class InventoryPage {
 			if (item == null) {
 				return;
 			}
-			int color = item.isWeapon() ? WEAPON_C : item.isArmor() ? ARMOR_C : item.isMagic() ? MAGIC_C : MISC_C;
+			int color = item.isWeapon() ? WEAPON_C
+					: item.isArmor() ? ARMOR_C : item.isConsumable() ? CONSUMABLE_C : MISC_C;
 			g.pushStyle();
 			g.noStroke();
 			g.fill(color);
@@ -148,6 +148,12 @@ public class InventoryPage {
 			break;
 		case INTERACT:
 			select(cursor);
+			break;
+		case CONSUME:
+			if (getItem(cursor).item != null && getItem(cursor).item.isConsumable()) {
+				entity.addHP(((Consumable) getItem(cursor).item).hpIncrease);
+				getItem(cursor).item = null;
+			}
 		default:
 		}
 	}
@@ -168,7 +174,7 @@ public class InventoryPage {
 		if (cursor.b >= 0 && (cursor.b > 0 || dir.b >= 0) && (cursor.b < itemList.length - 1 || dir.b <= 0)) {
 			cursor = new IntTuple((itemList[0].length + cursor.a + dir.a) % itemList[0].length, cursor.b + dir.b);
 		} else if (cursor.b == -1) {
-			cursor = new IntTuple((3 + cursor.a + dir.a) % 3, cursor.b + Math.max(0, dir.b));
+			cursor = new IntTuple((2 + cursor.a + dir.a) % 2, cursor.b + Math.max(0, dir.b));
 		} else if (cursor.b == 0 && dir.b < 0) {
 			cursor = new IntTuple(0, -1);
 		}
@@ -196,7 +202,7 @@ public class InventoryPage {
 		if (cursor.b >= 0 && cursor.b < itemList.length) {
 			return itemList[cursor.b][cursor.a % itemList[0].length];
 		} else if (cursor.b < 0) {
-			return cursor.a == 0 ? weaponSlot : cursor.a == 1 ? armorSlot : magicSlot;
+			return cursor.a == 0 ? weaponSlot : armorSlot;
 		} else {
 			return bin;
 		}
@@ -208,9 +214,11 @@ public class InventoryPage {
 		} else if (i.item.isWeapon()) {
 			return new String[] { i.item.getName(), "Weapon", "Damage: " + ((Weapon) i.item).getDamage() };
 		} else if (i.item.isArmor()) {
-			return new String[] { i.item.getName(), "Armor", "Resistance: " + ((Armor) i.item).getRes() };
-		} else if (i.item.isMagic()) {
-			return new String[] { i.item.getName(), "Magic Item", "Effect - ." };
+			return new String[] { i.item.getName(), "Armor", "Resistance: " + ((Armor) i.item).getRes(),
+					"Effect: " + ((Armor) i.item).effectType };
+		} else if (i.item.isConsumable()) {
+			return new String[] { i.item.getName(), "Consumable",
+					"Health Resplenished: " + String.format("%.0f", ((Consumable) i.item).hpIncrease) };
 		} else {
 			return new String[] { i.item.getName(), "This item has no effect.", "It will contribute",
 					"to your final score." };
@@ -252,6 +260,21 @@ public class InventoryPage {
 			}
 		}
 
+		// Print instructions
+		if (getItem(cursor).item != null) {
+			g.pushStyle();
+			g.textSize(g.height * 0.04f);
+			g.fill(FG_C);
+			g.textAlign(PConstants.LEFT, PConstants.CENTER);
+			String instructions = "[E] Move";
+			g.text(instructions, 0.02f * g.width, 0.9f * g.height);
+			if (getItem(cursor).item.isConsumable()) {
+				instructions = "[F] Consume";
+				g.text(instructions, 0.42f * g.width, 0.9f * g.height);
+			}
+			g.popStyle();
+		}
+
 		// Draw special items
 		PShape shape = g.createShape(PConstants.RECT, 0, 0, ITEM_SIZE * g.height, ITEM_SIZE * g.height);
 		weaponSlot.draw(cursor.equals(weaponSlot.position),
@@ -262,10 +285,6 @@ public class InventoryPage {
 				selectedCoords != null && selectedCoords.equals(armorSlot.position), new PVector(0.55f, 0.1f));
 		shape.setTexture(Assets.getSprite("E_Wood03.png"));
 		g.shape(shape, 0.19f * g.width, (ITEM_SIZE / 4) * g.height);
-		magicSlot.draw(cursor.equals(magicSlot.position),
-				selectedCoords != null && selectedCoords.equals(magicSlot.position), new PVector(0.85f, 0.1f));
-		shape.setTexture(Assets.getSprite("S_Thunder01.png"));
-		g.shape(shape, 0.36f * g.width, (ITEM_SIZE / 4) * g.height);
 	}
 
 	/**
@@ -288,7 +307,6 @@ public class InventoryPage {
 		this.bin = new InventoryItem(null, new IntTuple(0, inventory.getSize().b), ItemKind.BIN);
 		this.weaponSlot = new InventoryItem(e.getWeapon(), new IntTuple(0, -1), ItemKind.WEAPON);
 		this.armorSlot = new InventoryItem(e.getArmor(), new IntTuple(1, -1), ItemKind.ARMOR);
-		this.magicSlot = new InventoryItem(null, new IntTuple(2, -1), ItemKind.MAGIC);
 		this.g = g;
 	}
 }

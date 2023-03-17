@@ -2,14 +2,12 @@ package wolfdungeon3d;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import processing.core.PGraphics;
 import processing.core.PVector;
-import wolfdungeon3d.Button.ButtonStyle;
 
 public class CombatDialogBox {
-	private static final ButtonStyle STYLE = new ButtonStyle(0x8c, 0xff, 0xff, 0x8c, 0x00, 0x00);
-
 	private Button attackButton;
 	private Button defendButton;
 	// private Button castButton;
@@ -54,10 +52,12 @@ public class CombatDialogBox {
 				});
 		this.defendButton = new Button("Defend", new PVector(0.15f, 0.08f), new PVector(0.25f, 0.91f),
 				new EventCallback() {
+					Function<Entity, Integer> effect = e.getArmor() != null ? e.getArmor().effects : (e) -> 0;
+
 					public void call() {
-						game.setNextPlayerCommand(new DefendCommand("defend", (e) -> 0, (f) -> {
+						game.setNextPlayerCommand(new DefendCommand("defend", effect, (f) -> {
 							return f / e.getResistance();
-						}));
+						}, e.getArmor().effectType));
 					}
 				});
 		this.fleeButton = new Button("Flee", new PVector(0.15f, 0.08f), new PVector(0.6f, 0.81f), new EventCallback() {

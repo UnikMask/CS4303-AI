@@ -20,9 +20,21 @@ public class Inventory {
 	}
 
 	public void set(int row, int col, Item item) {
-		if (row >= 0 && col >= 0 && row < itemGrid.length && col < itemGrid[0].length) {
+		if (row >= 0 && col >= 0 && row < itemGrid[0].length && col < itemGrid.length) {
 			itemGrid[col][row] = item;
 		}
+	}
+
+	public int getNumItems() {
+		int num = 0;
+		for (Item[] row : itemGrid) {
+			for (Item i : row) {
+				if (i != null) {
+					num++;
+				}
+			}
+		}
+		return num;
 	}
 
 	public boolean add(Item item) {

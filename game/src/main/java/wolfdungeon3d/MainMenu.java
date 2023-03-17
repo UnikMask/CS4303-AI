@@ -3,7 +3,6 @@ package wolfdungeon3d;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
-import wolfdungeon3d.Button.ButtonStyle;
 import wolfdungeon3d.Runner.RunnerState;
 
 public class MainMenu {
@@ -14,7 +13,7 @@ public class MainMenu {
 	private Button helpButton;
 	private Button quitButton;
 
-	public void draw(PApplet p, PVector realMousePosition) {
+	public void draw(PApplet p, PVector realMousePosition, int lastScore) {
 		p.background(0xff2e2a2b);
 		p.pushStyle();
 		p.fill(0xff9c9c9c);
@@ -24,14 +23,25 @@ public class MainMenu {
 		p.text("Wolf Dungeon 3D", p.width / 2, 1.5f * p.height / 8);
 		p.popStyle();
 
+		if (lastScore != -1) {
+			p.pushStyle();
+			p.fill(0xffffffff);
+			p.textSize(p.height * 0.02f);
+			p.textAlign(PConstants.CENTER, PConstants.CENTER);
+			p.textFont(Assets.getFont("FFFFORWA.TTF"));
+			p.text("Last Score: " + lastScore, p.width * 0.5f, 0.4f * p.height);
+			p.popStyle();
+		}
+
 		playButton.draw(p.getGraphics(), realMousePosition, new PVector(p.width, p.height));
-		helpButton.draw(p.getGraphics(), realMousePosition, new PVector(p.width, p.height));
+		// helpButton.draw(p.getGraphics(), realMousePosition, new PVector(p.width,
+		// p.height));
 		quitButton.draw(p.getGraphics(), realMousePosition, new PVector(p.width, p.height));
 	}
 
 	public void handleOnClick(PVector realMousePosition, PVector screenBounds) {
 		playButton.onClick(realMousePosition, screenBounds);
-		helpButton.onClick(realMousePosition, screenBounds);
+		// helpButton.onClick(realMousePosition, screenBounds);
 		quitButton.onClick(realMousePosition, screenBounds);
 	}
 

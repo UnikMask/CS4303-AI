@@ -36,9 +36,9 @@ tasks.named('test') {
 }
 
 jar {
-	archiveBaseName = "tankPhysics"
+	archiveBaseName = "wolfdungeon3d"
 	manifest {
-		attributes 'Main-Class': 'tankphysics.Runner'
+		attributes 'Main-Class': 'wolfdungeon3d.Runner'
 	}
 	from {
 		configurations.runtimeClasspath.collect { it.isDirectory() ? it: zipTree(it) }

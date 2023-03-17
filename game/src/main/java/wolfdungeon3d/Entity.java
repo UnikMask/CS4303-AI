@@ -63,6 +63,10 @@ public class Entity implements Sprite {
 		return HP_PER_LEVEL * (1 + attributes.endurance);
 	}
 
+	public void addHP(float hp) {
+		this.hp += hp;
+	}
+
 	public float getHP() {
 		return hp;
 	}
@@ -180,5 +184,9 @@ public class Entity implements Sprite {
 		this.attributes = attr;
 		this.affectAttributes = attr.copy();
 		this.hp = this.getMaxHP();
+	}
+
+	public static Entity getNullEntity() {
+		return new Entity("", new PVector(), new PVector(), null, Attributes.getDefaultPlayerAttributes(), 0);
 	}
 }

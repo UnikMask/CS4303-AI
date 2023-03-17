@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -62,6 +61,7 @@ public class Game {
 	private int score = 0;
 	private Level lvl;
 	private int floor = 0;
+	private int enemiesKilled = 0;
 	private long lastFrameTime = 0;
 
 	// Battle-related vars
@@ -101,6 +101,10 @@ public class Game {
 		return lvl;
 	}
 
+	public int getFloor() {
+		return floor;
+	}
+
 	public ArrayList<Sprite> getSprites() {
 		return new ArrayList<>() {
 			{
@@ -120,6 +124,11 @@ public class Game {
 
 	public CombatDialogBox getPlayerCombatDialogBox() {
 		return playerCombatDialog;
+	}
+
+	public int calculateScore() {
+		int numItems = inventory.getNumItems();
+		return floor * 100 + numItems * 10 + enemiesKilled * 10;
 	}
 
 	////////////
@@ -177,6 +186,7 @@ public class Game {
 			}
 			break;
 		case EXPLORE:
+			score = calculateScore();
 			updateControllers(deltaT);
 			for (Entity e : entityControllerMap.keySet()) {
 				// Initiate battle
@@ -328,8 +338,10 @@ public class Game {
 			for (Entity e : combatInstance.getDefeatedEntities()) {
 				if (entityControllerMap.containsKey(e)) {
 					entityControllerMap.remove(e);
+					enemiesKilled++;
 				}
 				if (e == player) {
+					enemiesKilled = enemiesKilled == 0 ? 0 : enemiesKilled - 1;
 					state = GameState.END;
 					return;
 				}

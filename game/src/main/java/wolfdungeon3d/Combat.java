@@ -16,7 +16,7 @@ public class Combat {
 	private Set<Entity> rhs;
 	private long initiativeSeed;
 	private HashMap<Entity, HashMap<Function<Entity, Integer>, Integer>> buffs = new HashMap<>();
-	private HashMap<Entity, Function<Float, Float>> defenses = new HashMap<>();
+	private HashMap<Entity, DefendCommand> defenses = new HashMap<>();
 
 	private ArrayList<Entity> turnOrder;
 	private Iterator<Entity> turnCursor;
@@ -63,6 +63,17 @@ public class Combat {
 	// Combat Round handling //
 	///////////////////////////
 
+	private int applyEffect(Entity e, Function<Entity, Integer> effect) {
+		int effectLength = effect.apply(e);
+		if (effectLength > 0) {
+			if (!buffs.containsKey(e)) {
+				buffs.put(e, new HashMap<>());
+			}
+			buffs.get(e).put(effect, effectLength);
+		}
+		return effectLength;
+	}
+
 	public void nextCommand(CombatCommand command) {
 		if (ended) {
 			return;
@@ -73,15 +84,20 @@ public class Combat {
 			Entity target = ac.getTarget();
 			float damage = ac.getDamage();
 			if (defenses.containsKey(target)) {
-				damage = defenses.get(target).apply(damage);
-				System.out.println("defenses applied to target - damage fell to " + damage);
+				damage = defenses.get(target).getDefenseEffect().apply(damage);
+				int effectLength = applyEffect(currentEntity, defenses.get(target).effect);
+				messages.addLast(target.getName() + " defends against " + currentEntity.getName());
+				if (effectLength > 0) {
+					messages.addLast(currentEntity.getName() + " is hit by " + defenses.get(target).effectType);
+				}
+				defenses.remove(target);
 			}
 			float takenDmg = target.takeDamage(damage);
 			messages.addLast(currentEntity.getName() + " hit " + target.getName() + " for " + takenDmg + " damage!");
 			break;
 		case DEFEND:
 			DefendCommand dc = (DefendCommand) command;
-			defenses.put(currentEntity, dc.getDefenseEffect());
+			defenses.put(currentEntity, dc);
 			messages.add(currentEntity.getName() + " defended! ");
 			break;
 		case FLEE:
@@ -107,7 +123,6 @@ public class Combat {
 	}
 
 	private void endRound(Entity e) {
-
 		e.resetEffects();
 		ArrayList<Function<Entity, Integer>> removals = new ArrayList<>();
 		for (Function<Entity, Integer> effect : buffs.get(e).keySet()) {

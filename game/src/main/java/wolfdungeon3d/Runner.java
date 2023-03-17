@@ -8,7 +8,6 @@ import java.util.HashSet;
 import com.jogamp.newt.opengl.GLWindow;
 
 import processing.core.PApplet;
-import processing.core.PGraphics;
 import processing.core.PVector;
 import wolfdungeon3d.Game.GameState;
 
@@ -18,6 +17,7 @@ public class Runner extends PApplet {
 	Game game;
 	RunnerState state = RunnerState.MENU;
 	MainMenu mainMenu;
+	int lastScore = -1;
 
 	// Input Handling
 	HashSet<Character> heldKeys = new HashSet<>();
@@ -50,6 +50,7 @@ public class Runner extends PApplet {
 					}
 					game.update();
 				} else {
+					lastScore = game.calculateScore();
 					state = RunnerState.MENU;
 					game = null;
 				}
@@ -119,7 +120,7 @@ public class Runner extends PApplet {
 				game.draw();
 			break;
 		case MENU:
-			mainMenu.draw(this, new PVector(mouseX, mouseY));
+			mainMenu.draw(this, new PVector(mouseX, mouseY), lastScore);
 			break;
 		default:
 			break;

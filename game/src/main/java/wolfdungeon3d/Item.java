@@ -22,7 +22,7 @@ public class Item implements Sprite {
 		return false;
 	}
 
-	public boolean isMagic() {
+	public boolean isConsumable() {
 		return false;
 	}
 
@@ -40,6 +40,10 @@ public class Item implements Sprite {
 
 	public PImage getImage() {
 		return Assets.getSprite(spriteFile);
+	}
+
+	public static Item generateMisc(PVector position) {
+		return new Item("Miscallaneous item", "Ac_Ring02.png", position);
 	}
 
 	public Item(String name, String sprite) {

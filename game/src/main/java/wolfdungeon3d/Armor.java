@@ -10,7 +10,7 @@ import processing.core.PVector;
 public class Armor extends Item {
 	private static final String ARMOR_SPRITE = "E_Wood03.png";
 	private float res;
-	Function<Entity, Integer> effects;
+	Function<Entity, Integer> effects = (e) -> 0;
 	String effectType;
 
 	@Override

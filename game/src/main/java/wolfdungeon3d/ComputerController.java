@@ -190,8 +190,7 @@ public class ComputerController implements EntityController {
 		});
 		q.add(start);
 
-		int step = 0;
-		while (!q.isEmpty() && step < 1000) {
+		while (!q.isEmpty()) {
 			IntTuple next = q.poll();
 			if (next.equals(target)) {
 				path.addAll(getPath(target, start, lastNode));
@@ -206,7 +205,6 @@ public class ComputerController implements EntityController {
 					q.add(newNode);
 				}
 			}
-			step++;
 		}
 		return path;
 	}

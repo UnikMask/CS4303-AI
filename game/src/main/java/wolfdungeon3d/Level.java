@@ -358,7 +358,7 @@ public class Level {
 				behaviour.endPoint = new PVector(behaviour.startPoint.x, room.pos.y + room.size.y - 1);
 			}
 
-			behaviour.e = new Entity("Wolf Totem", PVector.add(behaviour.startPoint, new PVector(1, 1, 0.25f)),
+			behaviour.e = new Entity("Orb", PVector.add(behaviour.startPoint, new PVector(1, 1, 0.25f)),
 					new PVector(0.5f, 0.5f, 0.5f), Assets.getSprite(ENEMY_SPRITE),
 					Attributes.getRandomAttributes(floor, randomizer), floor + 1);
 			behaviours.add(behaviour);
@@ -371,15 +371,18 @@ public class Level {
 			if (specialChance > (float) luck / 10) {
 				PVector position = new PVector(room.pos.x + randomizer.nextInt(0, (int) room.size.x - 1) + 0.5f,
 						room.pos.y + randomizer.nextInt(0, (int) room.size.y - 1) + 0.5f);
-				switch (randomizer.nextInt(0, 2)) {
+				switch (randomizer.nextInt(0, 4)) {
 				case 0: // Weapon
 					items.add(Weapon.getRandomWeapon(floor, luck, randomizer, position));
 					break;
 				case 1: // Armor
 					items.add(Armor.getRandomArmor(floor, luck, randomizer, position));
 					break;
-				// case 2: // Potion
-				// case 3: // Magic Item
+				case 2: // Potion
+					items.add(new Consumable(randomizer.nextFloat() * (floor + 1) * 10, position));
+					break;
+				case 3: // Misc Item
+					items.add(Item.generateMisc(position));
 				}
 			}
 		}
