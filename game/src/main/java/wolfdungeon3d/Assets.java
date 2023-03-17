@@ -18,7 +18,8 @@ public class Assets {
 	public HashMap<String, PImage> texMap;
 
 	// Sprites
-	private static final List<String> spriteSrcs = Arrays.asList("sphere.png");
+	private static final List<String> spriteSrcs = Arrays.asList("sphere.png", "S_Thunder01.png", "W_Sword008.png",
+			"l_Chest01.png", "l_Chest02.png", "E_Wood03.png");
 	public HashMap<String, PImage> spriteMap;
 
 	// Fonts

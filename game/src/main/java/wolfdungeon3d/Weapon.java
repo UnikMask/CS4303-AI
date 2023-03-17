@@ -34,6 +34,11 @@ public class Weapon extends Item {
 		return isRanged;
 	}
 
+	@Override
+	public boolean isWeapon() {
+		return true;
+	}
+
 	//////////////////
 	// Constructors //
 	//////////////////

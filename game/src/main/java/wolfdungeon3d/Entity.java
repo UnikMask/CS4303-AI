@@ -110,8 +110,16 @@ public class Entity implements Sprite {
 		return weapon;
 	}
 
+	public void setWeapon(Weapon weapon) {
+		this.weapon = weapon;
+	}
+
 	public Armor getArmor() {
 		return armor;
+	}
+
+	public void setArmor(Armor armor) {
+		this.armor = armor;
 	}
 
 	@Override

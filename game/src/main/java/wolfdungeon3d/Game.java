@@ -130,6 +130,7 @@ public class Game {
 		if (player == null) {
 			player = new Entity("You", lvl.getStartPosition(), new PVector(0.5f, 0.5f, 0.5f), null,
 					Attributes.getDefaultPlayerAttributes(), 1);
+			player.setWeapon(new Weapon("Weapon of the Wolf", 0, 30, 0, false));
 			inventory = new Inventory(INVENTORY_SIZE.a, INVENTORY_SIZE.b);
 			controller = new PlayerController(player, this, new InputSettings());
 		} else {
@@ -326,11 +327,9 @@ public class Game {
 			Entity e = combatInstance.getCurrentEntity();
 			if (e == player) {
 				if (nextPlayerCommand != null) {
-					System.out.println("Next player command found! Sending to combat instance...");
 					combatInstance.nextCommand(nextPlayerCommand);
 					nextPlayerCommand = null;
 				} else if (playerCombatDialog == null) {
-					System.out.println("Player attacked and dialog null! Creating...");
 					playerCombatDialog = new CombatDialogBox(player, this);
 				}
 			} else {
@@ -359,7 +358,9 @@ public class Game {
 			break;
 		case INVENTORY:
 			if (key == 'i' || key == 'I') {
+				page.apply();
 				state = GameState.EXPLORE;
+				page = null;
 			} else {
 				page.keyPressed(key);
 			}
