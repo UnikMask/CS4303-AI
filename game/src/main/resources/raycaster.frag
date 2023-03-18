@@ -101,7 +101,7 @@ void main() {
 	}
 
 	vec4 light = vec4(1, 1, 0.6, 1);
-	float intensity = ((24.0 - dist) / 24.0) * dot(normalize(dir), ray);
+	float intensity = ((12.0 - dist) / 12.0) * dot(normalize(dir), ray);
 	gl_FragColor *= intensity * light;
 	gl_FragDepth = depth / renderDistance;
 }

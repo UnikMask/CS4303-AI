@@ -137,7 +137,7 @@ public class Game {
 
 	public void setUp() {
 		lvl = Level.generate(getLevelSize(floor), floor, player != null ? player.getAttributes().luck : 1,
-				new Date().getTime() + new Random(floor).nextInt());
+				70/* new Date().getTime() + new Random(floor).nextInt() */);
 		entityControllerMap = new HashMap<>();
 		for (EntityBehaviour b : lvl.getEntities()) {
 			entityControllerMap.put(b.e, new ComputerController(b, this));

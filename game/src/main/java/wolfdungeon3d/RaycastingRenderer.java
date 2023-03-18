@@ -1,9 +1,9 @@
 package wolfdungeon3d;
 
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,6 +11,8 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
+import processing.core.PMatrix;
+import processing.core.PMatrix3D;
 import processing.core.PShape;
 import processing.core.PVector;
 import processing.opengl.PShader;
@@ -31,6 +33,7 @@ public class RaycastingRenderer {
 	private static final PVector MSG_POSITION = new PVector(0.025f, 0.925f);
 	private static final int INIT_FRAMES_MESSAGE = 120;
 	private ArrayDeque<String> messageQueue = new ArrayDeque<>();
+	private HashMap<Sprite, PShape> spriteShapeMap = new HashMap<>();
 	private int framesUntilNextMessage = 0;
 
 	// Interaction display
@@ -66,52 +69,50 @@ public class RaycastingRenderer {
 
 		// Draw map
 		g.background(0);
-
 		canvas.setTexture(tex);
 		g.shader(raycastingShader);
 		g.shape(canvas, 0, 0);
-
 		g.resetShader();
 
 		// Draw entities
 		g.shader(spriteShader);
 		spriteShader.set("renderDistance", MAX_SPRITE_DRAW_DISTANCE);
-		List<Sprite> sprites = game.getState() == GameState.BATTLE ? Arrays.asList(game.getEnemy()) : game.getSprites();
-		for (Sprite s : sprites) {
+		spriteShader.set("dimensions", (float) g.width, (float) g.height);
+		spriteShader.set("cot", new PVector(plane.x, plane.y).mag() * (g.width / g.height) / dir.mag(),
+				new PVector(plane.x, plane.y).mag() / dir.mag());
+		for (Sprite s : game.getSprites()) {
 			if (s == game.getPlayer()) {
 				continue;
+			} else if (!spriteShapeMap.containsKey(s)) {
+				ArrayList<PVector> verts = new ArrayList<>(
+						Arrays.asList(new PVector(0, 0), new PVector(0, 1), new PVector(1, 1), new PVector(1, 0)));
+				PShape spriteShape = g.createShape();
+				spriteShape.beginShape();
+				for (PVector vt : verts) {
+					PVector v = new PVector(vt.x * s.getSize().x, vt.y * s.getSize().y);
+					v.sub(new PVector(s.getSize().x / 2, 0));
+					spriteShape.vertex(v.x, v.y, vt.x, 1 - vt.y);
+				}
+				if (s.getImage() != null) {
+					spriteShape.texture(s.getImage());
+				}
+				spriteShape.endShape(PConstants.CLOSE);
+				spriteShapeMap.put(s, spriteShape);
 			}
-			ArrayList<PVector> verts = new ArrayList<>(
-					Arrays.asList(new PVector(0, 0), new PVector(0, 1), new PVector(1, 1), new PVector(1, 0)));
 			PVector dist = PVector.sub(s.getPosition(), game.getPlayer().getPosition());
 			float theta = game.getPlayer().getRotation();
-			PShape spriteShape = g.createShape();
-			spriteShape.beginShape();
-			float depth = -PVector.dot(dist, PVector.div(dir, dir.mag()));
+			float depth = PVector.dot(dist, PVector.div(dir, dir.mag()));
 			float fovCot = new PVector(plane.x, plane.y).mag() / dir.mag();
-			for (PVector vt : verts) {
-				PVector v = new PVector(vt.x * s.getSize().x, vt.y * s.getSize().y);
-				v.sub(new PVector(s.getSize().x / 2, 0));
-				v = rotateY(v, theta);
-				v.add(new PVector(dist.x, dist.z, dist.y));
-				v = rotateY(v, -theta);
-				depth = v.z;
-				v = new PVector(v.x / (fovCot * depth * g.width / g.height), v.y / (fovCot * depth), 0);
-				v = new PVector(v.x * g.width, -v.y * g.height);
-				v.add(g.width / 2, g.height / 2);
-				spriteShape.vertex(v.x, v.y, vt.x, 1 - vt.y);
-			}
-			if (s.getImage() != null) {
-				spriteShape.texture(s.getImage());
-			}
-			spriteShape.endShape(PConstants.CLOSE);
-			spriteShader.set("depth", depth);
 
+			PMatrix3D mat = new PMatrix3D(rotateY(theta));
+			mat.apply(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, dist.x, dist.z, dist.y, 1);
+			mat.apply(rotateY(-theta));
 			if (depth < 0.1f) {
 				continue;
 			}
-
-			g.shape(spriteShape);
+			spriteShader.set("modelMatrix", mat);
+			spriteShader.set("depth", depth);
+			g.shape(spriteShapeMap.get(s));
 		}
 		g.resetShader();
 
@@ -189,8 +190,13 @@ public class RaycastingRenderer {
 	}
 
 	private PVector rotateY(PVector v, float theta) {
-		return new PVector((float) (Math.cos(-theta) * v.x + Math.sin(-theta) * v.z), v.y,
-				(float) (Math.cos(-theta) * v.z - Math.sin(-theta) * v.x));
+		return new PVector(v.x * (float) Math.cos(theta) + v.z * (float) Math.sin(theta), v.y,
+				-v.x * (float) Math.sin(theta) + v.z * (float) Math.cos(theta));
+	}
+
+	private PMatrix3D rotateY(float theta) {
+		return new PMatrix3D((float) Math.cos(theta), 0, (float) Math.sin(theta), 0, 0, 1, 0, 0,
+				(float) -Math.sin(theta), 0, (float) Math.cos(theta), 0, 0, 0, 0, 1);
 	}
 
 	private void generateCanvas(PGraphics graphics) {
@@ -203,6 +209,12 @@ public class RaycastingRenderer {
 		canvas.endShape(PConstants.CLOSE);
 	}
 
+	private PMatrix getFrustrum(PVector near, PVector far) {
+		return new PMatrix3D(2 * near.z / (far.x - near.x), 0, 0, -near.z * (far.x + near.x) / (far.x - near.x), 0,
+				2 * near.z / (far.y - near.y), 0, -near.z * (far.y + near.y) / (far.y - near.y), 0, 0,
+				-(far.z + near.z) / (far.z - near.z), 2 * far.z * near.z / (near.z - far.z), 0, 0, 1, 0);
+	}
+
 	/**
 	 * Constructor for a raycasting renderer.
 	 *
@@ -212,7 +224,7 @@ public class RaycastingRenderer {
 		this.applet = applet;
 		// raycastingShader = applet.loadShader("raycaster.frag", "raycaster.vert");
 		raycastingShader = applet.loadShader("raycaster.frag");
-		spriteShader = applet.loadShader("sprite.frag");
+		spriteShader = applet.loadShader("sprite.frag", "sprite.vert");
 		onTopShader = applet.loadShader("onTop.frag");
 	}
 }
