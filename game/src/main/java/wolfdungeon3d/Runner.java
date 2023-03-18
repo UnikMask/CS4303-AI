@@ -107,7 +107,7 @@ public class Runner extends PApplet {
 	}
 
 	public void settings() {
-		size(1920, 1080, PApplet.P3D);
+		size(displayWidth, displayHeight, PApplet.P3D);
 		fullScreen();
 	}
 
