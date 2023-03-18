@@ -161,7 +161,7 @@ public class InventoryPage {
 	public void apply() {
 		for (int i = 0; i < itemList.length; i++) {
 			for (int j = 0; j < itemList[0].length; j++) {
-				inventory.set(j, i, itemList[i][j].item);
+				inventory.set(i, j, itemList[i][j].item);
 			}
 		}
 		entity.setWeapon((Weapon) weaponSlot.item);
@@ -299,7 +299,7 @@ public class InventoryPage {
 		this.itemList = new InventoryItem[inventory.getSize().b][inventory.getSize().a];
 		for (int i = 0; i < itemList.length; i++) {
 			for (int j = 0; j < itemList[i].length; j++) {
-				itemList[i][j] = new InventoryItem(inventory.get(j, i), new IntTuple(j, i), ItemKind.ALL);
+				itemList[i][j] = new InventoryItem(inventory.get(i, j), new IntTuple(j, i), ItemKind.ALL);
 			}
 		}
 		this.entity = e;

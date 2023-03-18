@@ -65,7 +65,7 @@ public class Entity implements Sprite {
 	}
 
 	public void addHP(float hp) {
-		this.hp += hp;
+		this.hp = Math.min(getMaxHP(), this.hp + hp);
 	}
 
 	public float getHP() {

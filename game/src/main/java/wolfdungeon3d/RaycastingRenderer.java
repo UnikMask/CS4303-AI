@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 import processing.core.PApplet;
 import processing.core.PConstants;
@@ -19,7 +20,7 @@ import processing.opengl.PShader;
 import wolfdungeon3d.Game.GameState;
 
 public class RaycastingRenderer {
-	private final static float MAX_SPRITE_DRAW_DISTANCE = 24.0f;
+	private final static float MAX_SPRITE_DRAW_DISTANCE = 18.0f;
 	private PApplet applet;
 	private PShape canvas;
 	private int lastFloor;
@@ -46,6 +47,7 @@ public class RaycastingRenderer {
 		if (tex == null || game.getFloor() != lastFloor) {
 			tex = game.getLevelImage(applet);
 			lastFloor = game.getFloor();
+			spriteShapeMap = new HashMap<>();
 		}
 		List<PImage> tileTextures = game.getLevel().getLevelTextures().stream().map((s) -> Assets.getTex(s))
 				.collect(Collectors.toList());
@@ -80,6 +82,17 @@ public class RaycastingRenderer {
 		spriteShader.set("dimensions", (float) g.width, (float) g.height);
 		spriteShader.set("cot", new PVector(plane.x, plane.y).mag() * (g.width / g.height) / dir.mag(),
 				new PVector(plane.x, plane.y).mag() / dir.mag());
+		List<Sprite> sprites = game.getSprites();
+		sprites.sort(new Comparator<Sprite>() {
+			public int compare(Sprite s1, Sprite s2) {
+				return (int) ((PVector.dot(PVector.sub(s2.getPosition(), game.getPlayer().getPosition()),
+						game.getPlayer().getPosition())
+						- PVector.dot(PVector.sub(s1.getPosition(), game.getPlayer().getPosition()),
+								game.getPlayer().getPosition()))
+						* 24);
+
+			}
+		});
 		for (Sprite s : game.getSprites()) {
 			if (s == game.getPlayer()) {
 				continue;
@@ -100,13 +113,11 @@ public class RaycastingRenderer {
 				spriteShapeMap.put(s, spriteShape);
 			}
 			PVector dist = PVector.sub(s.getPosition(), game.getPlayer().getPosition());
-			float theta = game.getPlayer().getRotation();
 			float depth = PVector.dot(dist, PVector.div(dir, dir.mag()));
-			float fovCot = new PVector(plane.x, plane.y).mag() / dir.mag();
 
-			PMatrix3D mat = new PMatrix3D(rotateY(theta));
+			PMatrix3D mat = new PMatrix3D(rotateY(game.getPlayer().getRotation()));
 			mat.apply(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, dist.x, dist.z, dist.y, 1);
-			mat.apply(rotateY(-theta));
+			mat.apply(rotateY(-game.getPlayer().getRotation()));
 			if (depth < 0.1f) {
 				continue;
 			}

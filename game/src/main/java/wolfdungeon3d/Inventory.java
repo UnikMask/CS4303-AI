@@ -13,15 +13,15 @@ public class Inventory {
 
 	public Item get(int row, int col) {
 		if (row >= 0 && col >= 0 && row < itemGrid.length && col < itemGrid[0].length) {
-			return itemGrid[col][row];
+			return itemGrid[row][col];
 		} else {
 			return null;
 		}
 	}
 
 	public void set(int row, int col, Item item) {
-		if (row >= 0 && col >= 0 && row < itemGrid[0].length && col < itemGrid.length) {
-			itemGrid[col][row] = item;
+		if (row >= 0 && col >= 0 && row < itemGrid.length && col < itemGrid[0].length) {
+			itemGrid[row][col] = item;
 		}
 	}
 

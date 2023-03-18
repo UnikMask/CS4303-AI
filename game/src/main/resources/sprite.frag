@@ -11,5 +11,7 @@ varying vec4 vertTexCoord;
 
 void main() {
 	gl_FragDepth = depth / renderDistance;
-	gl_FragColor = texture2D(texture, vertTexCoord.st) * (renderDistance - depth) / renderDistance;
+	vec4 tex = texture2D(texture, vertTexCoord.st);
+	vec3 texLight = tex.rgb  * (renderDistance - depth) / renderDistance;
+	gl_FragColor = vec4(texLight.rgb, tex.a) ;
 }
