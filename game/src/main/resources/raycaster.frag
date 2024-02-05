@@ -2,7 +2,6 @@
 precision mediump float
 precision mediump int
 #endif
-
 uniform vec3 pos;
 uniform vec3 dir;
 uniform vec3 plane;
@@ -13,6 +12,19 @@ uniform sampler2D tile0;
 uniform sampler2D tile1;
 uniform sampler2D tile2;
 uniform sampler2D tile3;
+
+const int ditherMatrix[16] = int[](0,  8,  2,  10,
+                                  12, 4,  14, 6,
+                                  3,  11, 1,  9,
+                                  15, 7,  13, 5);
+const float ditherq = 1.0f;
+
+vec4 dither(vec4 color) {
+    float offset = ditherMatrix[int(mod(gl_FragCoord.x, 4)) + int(mod(gl_FragCoord.y, 4)) * 4] / 16.0;
+    color += offset * ditherq;
+    color -= mod(color, vec4(ditherq));
+    return color;
+}
 
 void main() {
 	vec3 coords = vec3(gl_FragCoord.xyz / vec3(screenSize.x, screenSize.y, 1)) * 2 - vec3(1, 1, 1);
@@ -101,7 +113,9 @@ void main() {
 	}
 
 	vec4 light = vec4(1, 1, 0.6, 1);
-	float intensity = ((renderDistance - dist) / renderDistance) * dot(normalize(dir), ray);
+	float intensity = pow((renderDistance - dist - 1) / renderDistance, 2) * dot(normalize(dir), ray);
+    float ditherq = 1.0f/8;
 	gl_FragColor *= intensity * light;
+    gl_FragColor =dither(gl_FragColor);
 	gl_FragDepth = depth / renderDistance;
 }
